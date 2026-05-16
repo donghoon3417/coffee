@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-size:16px;          /* 🔥 18 → 16으로 줄임 */
+  padding:12px;
+  background:#f5f5f5;
+}
+
+h4 {
+  margin:12px 0 6px;       /* 🔥 위아래 간격 줄임 */
+  font-size:15px;
+}
+
+.top-menu {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.top-btn {
+  padding:10px 16px;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  background:#ccc;     /* 기본 회색 */
+  color:white;
+}
+
+/* 🔥 선택된 버튼만 핑크 */
+.top-btn.active {
+  background:#ff6b9d;
+}
+#nameButtons button {
+  white-space: nowrap;
+}
+#nameButtons button.active {
+  background: #4CAF50;
+  color: white;
+}
+
+button {
+  padding:10px;
+  margin:3px;
+  border:none;
+  border-radius:6px;
+  background:#ddd;
+}
+
+button.active { background:#4CAF50; color:white; }
+
+input {
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+}
+
+/* 🔥 핵심 */
+#saveBtn {
+  width:100%;
+  padding:14px;
+  background:#aaa;
+  color:white;
+}
+
+table {
+  width:100%;
+  max-width:600px;   /* 🔥 줄이는 핵심 */
+  margin:10px auto;  /* 🔥 가운데 */
+  border-collapse:collapse;
+  background:white;
+}
+td, th {
+  border:1px solid #ccc;
+  padding:4px 6px;   /* 🔥 기존보다 작게 */
+  font-size:13px;    /* 🔥 살짝 축소 */
+  text-align:center;
+}
+.reset-btn {
+  background:#2196F3;  /* 파란색 */
+}
+input {
+  width:100%;
+  max-width:400px;   /* 🔥 핵심 */
+  padding:10px;
+  margin:6px auto;
+  display:block;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+/* 버튼도 같이 줄이기 */
+#saveBtn {
+  max-width:400px;
+  margin:10px auto;
+  display:block;
+  padding:12px;
+}
+button {
+  padding:8px 10px;        /* 🔥 줄임 */
+  margin:2px;
+  border:none;
+  border-radius:6px;
+  background:#ddd;
+  font-size:14px;
+}
+.section {
+  margin-bottom:10px;
+}
+.form-container {
+  max-width:420px;
+  margin:0 auto;        /* 🔥 전체 가운데 */
+}
+
+/* 제목도 가운데 */
+h4 {
+  text-align:center;
+  margin:12px 0 6px;
+}
+
+/* 버튼 그룹 가운데 */
+#menuSection,
+#tempSection,
+#sizeSection,
+#extraSection {
+  display:flex;
+  justify-content:center;   /* 🔥 핵심 */
+  flex-wrap:wrap;
+  gap:6px;
+  margin-bottom:8px;
+}
+
+/* 버튼 크기 살짝 줄이기 */
+button {
+  padding:8px 12px;
+  font-size:14px;
+}
+td button {
+  padding:4px 6px;
+  font-size:12px;
+  margin:2px;
+}
+@media (max-width:480px){
+  table {
+    font-size:12px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="top-menu">
+  <button id="formBtn" class="top-btn active" onclick="showForm()">주문하기</button>
+  <button id="listBtn" class="top-btn" onclick="showList()">주문목록</button>
+  <button id="adminBtn" onclick="adminLogin()">관리자</button>
+<button id="logoutBtn" onclick="adminLogout()" style="display:none;">로그아웃</button>
+
+</div>
+<div id="formPage">
+  <div class="form-container">  <!-- 🔥 이거 추가 -->
+<h4>👤 이름 선택</h4>
+<div id="nameButtons"></div>
+
+<input id="newName" placeholder="이름 등록">
+<button onclick="addName()">등록하기</button>
+
+<button onclick="toggleTeam()">팀 관리 열기/닫기</button>
+
+<div id="teamSection">
+  <h4>👥 팀 선택</h4>
+
+  <div id="teamButtons"></div>
+
+  <h3>팀 관리</h3>
+  <button onclick="saveTeam()">팀 저장</button>
+</div>
+
+<input id="name" placeholder="이름 (필수)" oninput="checkForm()">
+
+    <h4>☕ 메뉴</h4>
+   <div id="extraSection">
+  <button onclick="toggleDecaf(this)">디카페인</button>
+  <button onclick="toggleCaffeine(this)">카페인</button> <!-- 🔥 추가 -->
+</div>
+
+    <div id="menuSection">
+      <button onclick="selectMenu(this,'아메리카노')">아메리카노</button>
+      <button onclick="selectMenu(this,'카페라떼')">카페라떼</button>
+      <button onclick="selectMenu(this,'바닐라라떼')">바닐라라떼</button>
+      <button onclick="selectMenu(this,'카라멜마끼아또')">카라멜마끼아또</button>
+    </div>
+
+<div style="display:flex; justify-content:center; gap:40px;">
+
+  <div>
+    <h4>🔥 HOT / ❄ ICE</h4>
+    <div id="tempSection">
+      <button onclick="selectTemp(this,'HOT')">HOT</button>
+      <button onclick="selectTemp(this,'ICE')">ICE</button>
+    </div>
+  </div>
+
+  <div>
+    <h4>📏 사이즈</h4>
+    <div id="sizeSection">
+      <button onclick="selectSize(this,'S')">S</button>
+      <button onclick="selectSize(this,'M')">M</button>
+      <button onclick="selectSize(this,'L')">L</button>
+    </div>
+  </div>
+
+</div>
+
+
+    <h4>✍️ 기타 메뉴</h4>
+    <input id="customMenu" placeholder="직접 입력 (기타 메뉴)">
+
+    <input id="option" placeholder="옵션">
+    <input id="note" placeholder="요청사항">
+
+    <button id="saveBtn" onclick="save()" disabled>주문하기</button>
+
+  </div>
+</div>
+
+<div id="listPage" style="display:none;">
+  <div id="list"></div>
+</div>
+
+<?!= include('app1'); ?>
+<?!= include('app3'); ?>
+<?!= include('app4'); ?>
+<?!= include('app5'); ?>
+<?!= include('app2'); ?>
+
+
+</body>
+</html>

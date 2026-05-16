@@ -1,0 +1,114 @@
+<script>
+window.selectedNames = [];
+window.nameList = JSON.parse(localStorage.getItem("nameList") || "[]");
+
+// =========================
+// 이름 버튼 렌더링
+// =========================
+function renderNameButtons(){
+  const box = document.getElementById("nameButtons");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  const listRaw = Array.from(new Set([
+    ...window.nameList,
+    ...window.selectedNames
+  ]));
+
+  const list = Array.isArray(listRaw)
+    ? listRaw
+    : (typeof listRaw === "string"
+        ? listRaw.split(",").map(x=>x.trim()).filter(x=>x)
+        : []);
+
+  list.forEach(name=>{
+    const wrap = document.createElement("div");
+    wrap.style.display = "inline-flex";
+    wrap.style.margin = "4px";
+
+    const btn = document.createElement("button");
+    btn.innerText = name;
+
+    btn.onclick = ()=>{
+      if(window.selectedNames.includes(name)){
+        window.selectedNames = window.selectedNames.filter(n=>n!==name);
+      }else{
+        window.selectedNames.push(name);
+      }
+      updateNameInput();
+      highlightSelected();
+    };
+
+    const del = document.createElement("button");
+    del.innerText = "✖";
+    del.style.background = "#ff4d4f";
+    del.style.color = "white";
+    del.style.marginLeft = "3px";
+
+    del.onclick = ()=>{
+      if(!confirm(name + " 삭제?")) return;
+      window.nameList = window.nameList.filter(n=>n!==name);
+      window.selectedNames = window.selectedNames.filter(n=>n!==name);
+      localStorage.setItem("nameList", JSON.stringify(window.nameList));
+      renderNameButtons();
+      updateNameInput();
+      highlightSelected();
+    };
+
+    wrap.appendChild(btn);
+    wrap.appendChild(del);
+    box.appendChild(wrap);
+  });
+}
+
+// =========================
+// 선택 UI 표시
+// =========================
+function highlightSelected(){
+  const box = document.getElementById("nameButtons");
+  if(!box) return;
+
+  const buttons = box.querySelectorAll("button");
+  buttons.forEach(btn=>{
+    const name = btn.innerText.replace("✖","").trim();
+    if(window.selectedNames.includes(name)){
+      btn.classList.add("active");
+    }else{
+      btn.classList.remove("active");
+    }
+  });
+}
+
+// =========================
+// 이름 추가
+// =========================
+function addName(){
+  const input = document.getElementById("newName");
+  const name = input.value.trim();
+  if(!name) return;
+  if(window.nameList.includes(name)){
+    alert("이미 있음");
+    return;
+  }
+  window.nameList.push(name);
+  localStorage.setItem("nameList", JSON.stringify(window.nameList));
+  input.value = "";
+  renderNameButtons();
+}
+
+// =========================
+// input 반영
+// =========================
+function updateNameInput(){
+  const el = document.getElementById("name");
+  if(el) el.value = window.selectedNames.join(", ");
+}
+
+// =========================
+// 초기 실행
+// =========================
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderNameButtons();
+});
+</script>

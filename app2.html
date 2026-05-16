@@ -1,0 +1,97 @@
+<script>
+function renderList(data, summary){
+  drawTable(data.slice(1));
+  drawSummary(summary);
+}
+
+// =========================
+function drawTable(data){
+
+  let html = `<table>
+  <tr>
+    <th>선택</th>
+    <th>시간</th>
+    <th>이름</th>
+    <th>메뉴</th>
+    <th>HOT/ICE</th>
+    <th>사이즈</th>
+    <th>옵션</th>
+    <th>요청</th>
+  </tr>`;
+
+  data.slice().reverse().forEach(row=>{
+    const idx = row[row.length-1];
+
+    html += "<tr>";
+    html += `<td><input type="checkbox" class="rowCheck" value="${idx}"></td>`;
+
+    for(let i=0;i<row.length-1;i++){
+      html += `<td>${row[i]}</td>`;
+    }
+
+    html += "</tr>";
+  });
+
+  html += "</table>";
+
+  document.getElementById("list").innerHTML = html;
+}
+
+// =========================
+function drawSummary(res){
+
+  let html = `<div style="background:white;padding:10px;margin:10px auto;max-width:600px;text-align:center;">
+  <h3>📊 주문 집계</h3>`;
+
+  Object.entries(res)
+    .sort((a,b)=>b[1].count-a[1].count)
+    .forEach(([k,v])=>{
+      html += `<div><b>${k} (${v.count})</b><br>${v.names.join(", ")}</div>`;
+    });
+
+  html += `
+  <button onclick="copyOrder()">카톡 복사</button>
+  <button onclick="deleteChecked()">선택 삭제</button>
+  <button onclick="resetOrders()">전체 삭제</button>
+  <button id="closeBtn" onclick="toggleOrderClose()">주문 마감</button>
+  </div>`;
+
+  document.getElementById("list").insertAdjacentHTML("afterbegin", html);
+}
+
+// =========================
+function deleteChecked(){
+
+  const checks = document.querySelectorAll(".rowCheck:checked");
+  if(!checks.length) return alert("선택 없음");
+
+  if(!confirm("삭제할까?")) return;
+
+  const arr = [];
+  checks.forEach(c=>arr.push(Number(c.value)));
+
+  google.script.run.withSuccessHandler(()=>{
+    fullData = [];
+    loadList();
+  }).deleteMultiple(arr);
+}
+
+// =========================
+function resetOrders(){
+  if(!confirm("전체 삭제?")) return;
+
+  google.script.run.withSuccessHandler(()=>{
+    fullData = [];
+    loadList();
+  }).resetAllOrders();
+}
+
+// =========================
+function copyOrder(){
+  google.script.run.withSuccessHandler(t=>{
+    navigator.clipboard.writeText(t);
+    alert("복사 완료");
+  }).getOrderText();
+}
+
+</script>

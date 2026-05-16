@@ -1,0 +1,126 @@
+<script>
+let selectedMenu = "";
+let selectedTemp = "";
+let selectedSize = "";
+let isDecaf = false;
+let isCaffeine = false;
+
+// =========================
+// 버튼 활성화
+// =========================
+function checkForm(){
+  const btn = document.getElementById("saveBtn");
+  const name = document.getElementById("name").value.trim();
+  const custom = document.getElementById("customMenu").value.trim();
+
+  if(name && (selectedMenu || custom)){
+    btn.disabled = false;
+    btn.style.background = "#4CAF50";
+  }else{
+    btn.disabled = true;
+    btn.style.background = "#aaa";
+  }
+}
+
+// =========================
+// 메뉴 선택
+// =========================
+function selectMenu(btn, menu){
+  document.querySelectorAll("#menuSection button")
+    .forEach(b=>b.classList.remove("active"));
+
+  selectedMenu = menu;
+  document.getElementById("customMenu").value = "";
+
+  btn.classList.add("active");
+  checkForm();
+}
+
+// =========================
+function selectTemp(btn, temp){
+  document.querySelectorAll("#tempSection button")
+    .forEach(b=>b.classList.remove("active"));
+
+  selectedTemp = temp;
+  btn.classList.add("active");
+}
+
+// =========================
+function selectSize(btn, size){
+  document.querySelectorAll("#sizeSection button")
+    .forEach(b=>b.classList.remove("active"));
+
+  selectedSize = size;
+  btn.classList.add("active");
+}
+
+// =========================
+function toggleCaffeine(btn){
+  isCaffeine = !isCaffeine;
+
+  if(isCaffeine){
+    isDecaf = false;
+    document.querySelectorAll("#extraSection button")[0].classList.remove("active");
+  }
+
+  btn.classList.toggle("active", isCaffeine);
+}
+
+// =========================
+function toggleDecaf(btn){
+  isDecaf = !isDecaf;
+
+  if(isDecaf){
+    isCaffeine = false;
+    document.querySelectorAll("#extraSection button")[1].classList.remove("active");
+  }
+
+  btn.classList.toggle("active", isDecaf);
+}
+
+// =========================
+// 기본값
+// =========================
+function initDefault(){
+  selectedMenu = "";
+  selectedTemp = "ICE";
+  selectedSize = "M";
+  isDecaf = true;
+  isCaffeine = false;
+
+  document.querySelectorAll("#menuSection button")
+    .forEach(btn=>btn.classList.remove("active"));
+
+  document.querySelectorAll("#tempSection button")
+    .forEach(b=>b.classList.toggle("active", b.innerText==="ICE"));
+
+  document.querySelectorAll("#sizeSection button")
+    .forEach(b=>b.classList.toggle("active", b.innerText==="M"));
+
+  document.querySelectorAll("#extraSection button")
+    .forEach(b=>b.classList.remove("active"));
+
+  document.querySelectorAll("#extraSection button")[0].classList.add("active");
+
+  checkForm();
+}
+
+// =========================
+// 초기
+// =========================
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.getElementById("name").addEventListener("input", checkForm);
+
+  document.getElementById("customMenu")
+    .addEventListener("input", function(){
+      if(this.value.trim()){
+        selectedMenu = "";
+        document.querySelectorAll("#menuSection button")
+          .forEach(b=>b.classList.remove("active"));
+      }
+      checkForm();
+    });
+
+  initDefault();
+});
+</script>

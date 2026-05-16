@@ -1,0 +1,186 @@
+<script>
+let fullData = [];
+let summaryData = {};
+
+// =========================
+function showForm(){
+  formPage.style.display="block";
+  listPage.style.display="none";
+
+  localStorage.setItem("page", "form");
+
+  // 🔥 여기 추가
+  const box = document.getElementById("teamSection");
+  if(box){
+    if(!localStorage.getItem("teamVisible")){
+      box.style.display = "none";
+    }else{
+      box.style.display =
+        localStorage.getItem("teamVisible") === "true" ? "block" : "none";
+    }
+  }
+
+  formBtn.classList.add("active");
+  listBtn.classList.remove("active");
+}
+// =========================
+function showList(){
+  formPage.style.display="none";
+  listPage.style.display="block";
+
+  localStorage.setItem("page", "list");
+
+  formBtn.classList.remove("active");  // 🔥 추가
+  listBtn.classList.add("active");     // 🔥 추가
+
+  loadList();
+}
+// =========================
+function loadList(){
+
+  if(fullData.length){
+    renderList(fullData, summaryData);
+    loadCloseState(); // 🔥 여기로 이동
+    return;
+  }
+
+  google.script.run.withSuccessHandler(res=>{
+    fullData = res.orders;
+    summaryData = res.summary;
+
+    renderList(fullData, summaryData);
+
+    loadCloseState(); // 🔥 여기도 추가
+  }).getAllData();
+}
+
+// =========================
+function save(){
+
+  const btn = document.getElementById("saveBtn");
+
+  // 🔥 클릭하자마자 변경
+  btn.innerText = "주문중...";
+  btn.disabled = true;
+
+  const nameValue = document.getElementById("name").value.trim();
+  const customMenu = document.getElementById("customMenu").value.trim();
+
+  const finalMenu =
+    (isDecaf ? "디카페인 " : isCaffeine ? "카페인 " : "") +
+    (selectedMenu || customMenu);
+
+  if(!nameValue){
+    alert("이름이 선택되지 않았습니다");
+    btn.innerText = "주문하기";   // 🔥 복구
+    btn.disabled = false;
+    return;
+  }
+
+  if(!selectedMenu && !customMenu){
+    alert("메뉴가 선택되지 않았습니다");
+    btn.innerText = "주문하기";   // 🔥 복구
+    btn.disabled = false;
+    return;
+  }
+
+  const data = {
+    names: nameValue.split(",").map(x=>x.trim()).filter(x=>x),
+    menu: finalMenu,
+    temp: selectedTemp,
+    size: selectedSize,
+    option: document.getElementById("option").value,
+    note: document.getElementById("note").value
+  };
+
+  google.script.run
+    .withSuccessHandler(()=>{
+      btn.innerText = "주문하기";   // 🔥 완료 후 복구
+      btn.disabled = false;
+
+      fullData = [];
+      loadList();
+      showList();
+    })
+    .withFailureHandler(()=>{
+      btn.innerText = "주문하기";   // 🔥 실패 시 복구
+      btn.disabled = false;
+    })
+    .saveOrder(data);
+}
+// =========================
+function toggleOrderClose(){
+
+  const btn = document.getElementById("closeBtn");
+  const isClosed = btn.classList.contains("closed");
+
+  // 🔥 마감
+  if(!isClosed){
+
+    if(!confirm("주문 마감하시겠습니까?")) return;
+
+    google.script.run
+      .withSuccessHandler(()=>{
+        updateCloseUI(true);
+      })
+      .setOrderClosed(true);
+
+  }else{
+
+    // 🔥 해제
+    if(!confirm("마감 해제할까요?")) return;
+
+    google.script.run
+      .withSuccessHandler(()=>{
+        updateCloseUI(false);
+      })
+      .setOrderClosed(false);
+  }
+}
+
+function updateCloseUI(isClosed){
+
+  const btn = document.getElementById("closeBtn");
+
+  const all = document.querySelectorAll(
+    "#formPage button, #formPage input"
+  );
+
+  if(isClosed){
+    btn.innerText = "주문 마감됨";
+    btn.style.background = "#f44336";
+    btn.classList.add("closed");
+
+    all.forEach(el=>{
+      if(el.id !== "closeBtn"){
+        el.disabled = true;
+      }
+    });
+
+  }else{
+    btn.innerText = "주문 마감";
+    btn.style.background = "#4CAF50";
+    btn.classList.remove("closed");
+
+    all.forEach(el=>{
+      el.disabled = false;
+    });
+  }
+}
+function loadCloseState(){
+  google.script.run.withSuccessHandler(state=>{
+    updateCloseUI(state);
+  }).getOrderClosed();
+}
+
+window.onload = function(){
+
+  const page = localStorage.getItem("page");
+
+  if(page === "list"){
+    showList();
+  }else{
+    showForm();
+  }
+};
+</script>
