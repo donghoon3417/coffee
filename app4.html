@@ -163,13 +163,35 @@ function addName(){
 
   if(!name) return;
 
+  // 이미 존재하는 이름
   if(window.nameList.includes(name)){
 
-    alert("이미 있음");
+    // 숨김 상태면 복구
+    if(window.hiddenNames.includes(name)){
+
+      window.hiddenNames =
+        window.hiddenNames.filter(
+          n => n !== name
+        );
+
+      sessionStorage.setItem(
+        "hiddenNames",
+        JSON.stringify(window.hiddenNames)
+      );
+
+      renderNameButtons();
+
+      alert("숨김 해제됨");
+
+    }else{
+
+      alert("이미 있음");
+    }
 
     return;
   }
 
+  // 신규 추가
   window.nameList.push(name);
 
   localStorage.setItem(

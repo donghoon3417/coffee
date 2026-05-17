@@ -1,0 +1,367 @@
+<script>
+window.teams = {};
+window.currentTeam = null;
+
+// =========================
+// 서버에서 팀 불러오기
+// =========================
+function loadTeams(){
+
+  google.script.run
+
+    .withSuccessHandler((res)=>{
+
+      const before =
+        JSON.stringify(window.teams);
+
+      const after =
+        JSON.stringify(res || {});
+
+      if(before !== after){
+
+        window.teams = res || {};
+
+        renderTeamButtons();
+      }
+    })
+
+    .getTeamsFromServer();
+}
+
+// =========================
+// 서버에서 이름 불러오기
+// =========================
+function loadNames(){
+
+  google.script.run
+
+    .withSuccessHandler((res)=>{
+
+      const serverNames = res || [];
+
+      window.nameList = [
+
+        ...new Set([
+          ...window.nameList,
+          ...serverNames
+        ])
+      ];
+
+      renderNameButtons();
+    })
+
+    .getNamesFromServer();
+}
+
+// =========================
+// 팀 저장
+// =========================
+function saveTeam(){
+
+  if(!window.isAdmin){
+    alert("관리자만 가능");
+    return;
+  }
+
+  const name =
+    prompt("팀 이름");
+
+  if(!name) return;
+
+  if(window.selectedNames.length === 0){
+
+    alert("이름 선택 먼저");
+    return;
+  }
+
+  window.teams[name] = [
+    ...window.selectedNames
+  ];
+
+  google.script.run
+
+    .withSuccessHandler((res)=>{
+
+      window.teams = res || {};
+
+      renderTeamButtons();
+
+      alert("팀 저장 완료");
+    })
+
+    .saveTeamsToServer(window.teams);
+}
+
+// =========================
+// 팀 버튼 렌더링
+// =========================
+function renderTeamButtons(){
+
+  const box =
+    document.getElementById("teamButtons");
+
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  Object.keys(window.teams)
+    .forEach((t)=>{
+
+      const wrap =
+        document.createElement("div");
+
+      wrap.style.display =
+        "inline-flex";
+
+      wrap.style.margin = "4px";
+
+      const btn =
+        document.createElement("button");
+
+      btn.innerText = t;
+
+      btn.onclick = ()=>{
+
+        window.currentTeam = t;
+
+        let members =
+          window.teams[t];
+
+        if(Array.isArray(members)){
+
+          members = members;
+
+        }else if(
+          typeof members === "string"
+        ){
+
+          members = members
+            .split(",")
+            .map(x => x.trim())
+            .filter(x => x);
+
+        }else{
+
+          members = [];
+        }
+
+        members.forEach(name => {
+
+          if(
+            !window.nameList.includes(name)
+          ){
+            window.nameList.push(name);
+          }
+
+          window.hiddenNames =
+            window.hiddenNames.filter(
+              n => n !== name
+            );
+        });
+
+        sessionStorage.setItem(
+          "hiddenNames",
+          JSON.stringify(
+            window.hiddenNames
+          )
+        );
+
+        window.selectedNames = [
+
+          ...new Set([
+            ...window.selectedNames,
+            ...members
+          ])
+        ];
+
+        renderNameButtons();
+
+        highlightSelected();
+
+        updateNameInput();
+
+        checkForm();
+      };
+
+      const del =
+        document.createElement("button");
+
+      del.innerText = "✖";
+
+      del.style.background =
+        "#ff4d4f";
+
+      del.style.color =
+        "white";
+
+      del.style.marginLeft =
+        "3px";
+
+      if(!window.isAdmin){
+        del.style.display = "none";
+      }
+
+      del.onclick = ()=>{
+
+        if(!confirm(t + " 삭제?"))
+          return;
+
+        delete window.teams[t];
+
+        google.script.run
+
+          .withSuccessHandler((res)=>{
+
+            window.teams = res || {};
+
+            renderTeamButtons();
+          })
+
+          .saveTeamsToServer(
+            window.teams
+          );
+      };
+
+      wrap.appendChild(btn);
+      wrap.appendChild(del);
+
+      box.appendChild(wrap);
+    });
+}
+
+// =========================
+// 팀 수정
+// =========================
+function editTeam(){
+
+  if(!window.isAdmin){
+
+    alert("관리자만 가능");
+    return;
+  }
+
+  const oldTeamNames =
+    Object.keys(window.teams);
+
+  if(oldTeamNames.length === 0){
+
+    alert("팀 없음");
+    return;
+  }
+
+  // =========================
+  // 기존 팀 선택
+  // =========================
+  let oldTeam =
+    prompt(
+      "수정할 기존 팀 이름\n\n" +
+      oldTeamNames.join(", ")
+    );
+
+  if(!oldTeam) return;
+
+  oldTeam = oldTeam.trim();
+
+  // 공백 무시 검색
+  const matchedTeam =
+    oldTeamNames.find(
+      t => t.trim() === oldTeam
+    );
+
+  if(!matchedTeam){
+
+    alert("없는 팀");
+    return;
+  }
+
+  // =========================
+  // 새 팀 이름
+  // =========================
+  let newTeam =
+    prompt(
+      "팀이름을 설정하십시오.",
+      matchedTeam
+    );
+
+  if(!newTeam) return;
+
+  newTeam = newTeam.trim();
+
+  // =========================
+  // 현재 보이는 이름 기준 저장
+  // =========================
+  const members =
+    window.nameList.filter(
+      name =>
+        !window.hiddenNames.includes(name)
+    );
+
+  // 기존 팀 삭제
+  delete window.teams[matchedTeam];
+
+  // 새 팀 저장
+  window.teams[newTeam] = [
+    ...new Set(members)
+  ];
+
+  google.script.run
+
+    .withSuccessHandler((res)=>{
+
+      window.teams = res || {};
+
+      renderTeamButtons();
+
+      alert("팀 수정 완료");
+    })
+
+    .saveTeamsToServer(window.teams);
+}
+
+// =========================
+// 팀 토글
+// =========================
+function toggleTeam(){
+
+  const el =
+    document.getElementById(
+      "teamSection"
+    );
+
+  if(!el) return;
+
+  const isHidden =
+    el.style.display === "none";
+
+  el.style.display =
+    isHidden ? "block" : "none";
+
+  localStorage.setItem(
+    "teamVisible",
+    isHidden ? "true" : "false"
+  );
+}
+
+// =========================
+// 초기 실행
+// =========================
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+
+    renderTeamButtons();
+
+    loadTeams();
+
+    loadNames();
+
+    setInterval(()=>{
+
+      loadTeams();
+
+      loadNames();
+
+    }, 3000);
+  }
+);
+</script>

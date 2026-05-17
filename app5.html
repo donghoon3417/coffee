@@ -1,251 +1,209 @@
 <script>
-  window.teams = {};
-  window.currentTeam = null;
-  window.isAdmin = localStorage.getItem("isAdmin") === "true";
+window.nameList = window.nameList || [];
+window.selectedNames = window.selectedNames || [];
+window.hiddenNames =
+  JSON.parse(
+    sessionStorage.getItem("hiddenNames") || "[]"
+  );
 
-  // =========================
-  // 서버에서 팀 불러오기
-  // =========================
-  function loadTeams() {
-    google.script.run
-      .withSuccessHandler((res) => {
-        const before = JSON.stringify(window.teams);
-        const after = JSON.stringify(res || {});
+function renderNameButtons(){
 
-        // 변경 있을 때만 렌더링
-        if (before !== after) {
-          window.teams = res || {};
+  const box =
+    document.getElementById("nameButtons");
 
-          renderTeamButtons();
-        }
-      })
-      .getTeamsFromServer();
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  window.nameList.forEach(name => {
+
+    const hidden =
+      window.hiddenNames.includes(name) &&
+      !window.selectedNames.includes(name);
+
+    if(hidden) return;
+
+    const wrap =
+      document.createElement("div");
+
+    wrap.style.display = "inline-flex";
+    wrap.style.margin = "4px";
+
+    const btn =
+      document.createElement("button");
+
+    btn.innerText = name;
+
+    if(window.selectedNames.includes(name)){
+      btn.classList.add("active");
+    }
+
+    btn.onclick = () => {
+
+      if(window.selectedNames.includes(name)){
+
+        window.selectedNames =
+          window.selectedNames.filter(
+            n => n !== name
+          );
+
+      }else{
+
+        window.selectedNames.push(name);
+      }
+
+      highlightSelected();
+      updateNameInput();
+      checkForm();
+    };
+
+    const del =
+      document.createElement("button");
+
+    del.innerText = "✖";
+
+    del.style.background = "#ff4d4f";
+    del.style.color = "white";
+    del.style.marginLeft = "3px";
+
+del.onclick = () => {
+
+  // 중복 방지
+  if(
+    !window.hiddenNames.includes(name)
+  ){
+
+    window.hiddenNames.push(name);
   }
 
-  // =========================
-  // 서버에서 이름 불러오기
-  // =========================
-function loadNames() {
+  // 선택 해제
+  window.selectedNames =
+    window.selectedNames.filter(
+      n => n !== name
+    );
+
+  // 저장
+  sessionStorage.setItem(
+    "hiddenNames",
+    JSON.stringify(window.hiddenNames)
+  );
+
+  // UI 즉시 갱신
+  renderNameButtons();
+
+  highlightSelected();
+
+  updateNameInput();
+
+  checkForm();
+};
+
+    wrap.appendChild(btn);
+    wrap.appendChild(del);
+
+    box.appendChild(wrap);
+  });
+}
+
+function highlightSelected(){
+
+  document
+    .querySelectorAll("#nameButtons button")
+    .forEach(btn => {
+
+      if(btn.innerText === "✖") return;
+
+      btn.classList.toggle(
+        "active",
+        window.selectedNames.includes(
+          btn.innerText
+        )
+      );
+    });
+}
+
+function updateNameInput(){
+
+  const input =
+    document.getElementById("selectedNames");
+
+  if(!input) return;
+
+  input.value =
+    window.selectedNames.join(", ");
+}
+
+function addName(){
+
+  const input =
+    document.getElementById("newName");
+
+  if(!input) return;
+
+  const name =
+    input.value.trim();
+
+  if(!name) return;
+
+  // 이미 존재하면 숨김 해제
+  if(window.nameList.includes(name)){
+
+    window.hiddenNames =
+      window.hiddenNames.filter(
+        n => n !== name
+      );
+
+    sessionStorage.setItem(
+      "hiddenNames",
+      JSON.stringify(window.hiddenNames)
+    );
+
+    renderNameButtons();
+
+    input.value = "";
+
+    return;
+  }
+
+  // 신규 추가
+  const newList = [
+    ...window.nameList,
+    name
+  ];
 
   google.script.run
 
-    .withSuccessHandler((res) => {
+    .withSuccessHandler((res)=>{
 
-      // 🔥 서버값으로 완전 교체
       window.nameList = res || [];
+
+      input.value = "";
 
       renderNameButtons();
     })
 
-    .getNamesFromServer();
+    .saveNamesToServer(newList);
 }
+window.isAdmin =
+  localStorage.getItem("isAdmin") === "true";
 
-  // =========================
-  // 팀 저장
-  // =========================
-  function saveTeam() {
-    if (!window.isAdmin) {
-      alert("관리자만 가능");
-      return;
-    }
+// =========================
+// 관리자 로그인
+// =========================
+function adminLogin(){
 
-    const name = prompt("팀 이름");
+  const pw =
+    prompt("관리자 비밀번호");
 
-    if (!name) return;
-
-    if (window.selectedNames.length === 0) {
-      alert("이름 선택 먼저");
-      return;
-    }
-
-    window.teams[name] = [...window.selectedNames];
-
-    google.script.run
-      .withSuccessHandler((res) => {
-        window.teams = res || {};
-
-        renderTeamButtons();
-
-        alert("팀 저장 완료");
-      })
-      .saveTeamsToServer(window.teams);
-  }
-
-  // =========================
-  // 팀 버튼 렌더링
-  // =========================
-  function renderTeamButtons() {
-    const box = document.getElementById("teamButtons");
-
-    if (!box) return;
-
-    box.innerHTML = "";
-
-    Object.keys(window.teams).forEach((t) => {
-      const wrap = document.createElement("div");
-
-      wrap.style.display = "inline-flex";
-      wrap.style.margin = "4px";
-
-      const btn = document.createElement("button");
-
-      btn.innerText = t;
-
-btn.onclick = () => {
-
-  window.currentTeam = t;
-
-  let members = window.teams[t];
-
-  if (typeof members === "string") {
-
-    members = members
-      .split(",")
-      .map((x) => x.trim())
-      .filter((x) => x);
-  }
-
-window.selectedNames = [...members];
-
-  renderNameButtons();
-  updateNameInput();
-  highlightSelected();
-};
-
-      const del = document.createElement("button");
-
-      del.innerText = "✖";
-
-      del.style.background = "#ff4d4f";
-      del.style.color = "white";
-      del.style.marginLeft = "3px";
-
-      if (!window.isAdmin) {
-        del.style.display = "none";
-      }
-
-      del.onclick = () => {
-        if (!confirm(t + " 삭제?")) return;
-
-        delete window.teams[t];
-
-        google.script.run
-          .withSuccessHandler((res) => {
-            window.teams = res || {};
-
-            renderTeamButtons();
-          })
-          .saveTeamsToServer(window.teams);
-      };
-
-      wrap.appendChild(btn);
-      wrap.appendChild(del);
-
-      box.appendChild(wrap);
-    });
-  }
-
-  function editTeam(){
-
-  if(!window.isAdmin){
-    alert("관리자만 가능");
-    return;
-  }
-
-  const teamNames =
-    Object.keys(window.teams);
-
-  if(teamNames.length === 0){
-    alert("팀 없음");
-    return;
-  }
-
-  const team =
-    prompt(
-      "수정할 팀 이름\n\n" +
-      teamNames.join(", ")
-    );
-
-  if(!team) return;
-
-  if(!window.teams[team]){
-    alert("없는 팀");
-    return;
-  }
-
-  const action =
-    prompt("삭제 = delete\n이름추가 = add");
-
-  if(action === "delete"){
-
-    delete window.teams[team];
-
-  }else if(action === "add"){
-
-    const name =
-      prompt("추가할 이름");
-
-    if(!name) return;
-
-    let members = window.teams[team];
-
-    if(typeof members === "string"){
-
-      members = members
-        .split(",")
-        .map(x => x.trim())
-        .filter(x => x);
-    }
-
-    if(!members.includes(name)){
-      members.push(name);
-    }
-
-    window.teams[team] = members;
-
-  }else{
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler((res)=>{
-
-      window.teams = res || {};
-
-      renderTeamButtons();
-
-      alert("팀 수정 완료");
-
-    })
-    .saveTeamsToServer(window.teams);
-}
-
-  // =========================
-  // 팀 섹션 토글
-  // =========================
-  function toggleTeam() {
-    const el = document.getElementById("teamSection");
-
-    if (!el) return;
-
-    const isHidden = el.style.display === "none";
-
-    el.style.display = isHidden ? "block" : "none";
-
-    localStorage.setItem("teamVisible", isHidden ? "true" : "false");
-  }
-
-  // =========================
-  // 관리자 모드
-  // =========================
-function adminLogin() {
-
-  const pw = prompt("관리자 비밀번호");
-
-  if (pw === "3417") {
+  if(pw === "3417"){
 
     window.isAdmin = true;
 
+    localStorage.setItem(
+      "isAdmin",
+      "true"
+    );
+
     const btn =
       document.getElementById("adminBtn");
 
@@ -257,116 +215,9 @@ function adminLogin() {
 
     const saveTeamBtn =
       document.getElementById("saveTeamBtn");
-
-      const editTeamBtn =
-  document.getElementById("editTeamBtn");
-
-if(editTeamBtn){
-  editTeamBtn.style.display = "inline-block";
-}
-
-
-    if (btn) {
-      btn.innerText = "관리자모드";
-    }
-
-    if (logout) {
-      logout.style.display = "inline-block";
-    }
-
-    if (teamBtn) {
-      teamBtn.style.display = "inline-block";
-    }
-
-    // 🔥 추가
-    if (saveTeamBtn) {
-      saveTeamBtn.style.display = "inline-block";
-    }
-
-    renderTeamButtons();
-
-  } else {
-
-    alert("비밀번호 틀림");
-  }
-}
-function adminLogout() {
-
-  window.isAdmin = false;
-
-  const btn =
-    document.getElementById("adminBtn");
-
-  const logout =
-    document.getElementById("logoutBtn");
-
-  const teamBtn =
-    document.getElementById("teamToggleBtn");
-
-  const saveTeamBtn =
-    document.getElementById("saveTeamBtn");
 
     const editTeamBtn =
-  document.getElementById("editTeamBtn");
-
-if(editTeamBtn){
-  editTeamBtn.style.display = "none";
-}
-
-  if (btn) {
-    btn.innerText = "관리자";
-  }
-
-  if (logout) {
-    logout.style.display = "none";
-  }
-
-  // 팀관리 버튼 숨기기
-  if (teamBtn) {
-    teamBtn.style.display = "none";
-  }
-
-  // 🔥 추가
-  if (saveTeamBtn) {
-    saveTeamBtn.style.display = "none";
-  }
-
-  renderTeamButtons();
-
-  alert("관리자 해제됨");
-}
-  // =========================
-  // 초기 실행
-  // =========================
-  document.addEventListener("DOMContentLoaded", () => {
-
-  renderTeamButtons();
-
-  const box =
-    document.getElementById("teamSection");
-
-  const visible =
-    localStorage.getItem("teamVisible");
-
-  box.style.display =
-    visible === "true"
-      ? "block"
-      : "none";
-
-  // 🔥 관리자 상태 복원
-  if(window.isAdmin){
-
-    const btn =
-      document.getElementById("adminBtn");
-
-    const logout =
-      document.getElementById("logoutBtn");
-
-    const teamBtn =
-      document.getElementById("teamToggleBtn");
-
-    const saveTeamBtn =
-      document.getElementById("saveTeamBtn");
+      document.getElementById("editTeamBtn");
 
     if(btn){
       btn.innerText = "관리자모드";
@@ -383,15 +234,109 @@ if(editTeamBtn){
     if(saveTeamBtn){
       saveTeamBtn.style.display = "inline-block";
     }
+
+    if(editTeamBtn){
+      editTeamBtn.style.display = "inline-block";
+    }
+
+    alert("관리자 로그인 완료");
+
+  }else{
+
+    alert("비밀번호 틀림");
+  }
+}
+
+// =========================
+// 관리자 로그아웃
+// =========================
+function adminLogout(){
+
+  window.isAdmin = false;
+
+  localStorage.removeItem("isAdmin");
+
+  const btn =
+    document.getElementById("adminBtn");
+
+  const logout =
+    document.getElementById("logoutBtn");
+
+  const teamBtn =
+    document.getElementById("teamToggleBtn");
+
+  const saveTeamBtn =
+    document.getElementById("saveTeamBtn");
+
+  const editTeamBtn =
+    document.getElementById("editTeamBtn");
+
+  if(btn){
+    btn.innerText = "관리자";
   }
 
-  loadTeams();
-  loadNames();
+  if(logout){
+    logout.style.display = "none";
+  }
 
-  setInterval(() => {
-    loadTeams();
-    loadNames();
-  }, 3000);
+  if(teamBtn){
+    teamBtn.style.display = "none";
+  }
 
-});
+  if(saveTeamBtn){
+    saveTeamBtn.style.display = "none";
+  }
+
+  if(editTeamBtn){
+    editTeamBtn.style.display = "none";
+  }
+
+  alert("관리자 로그아웃");
+}
+
+// =========================
+// 관리자 상태 복원
+// =========================
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+
+    if(!window.isAdmin) return;
+
+    const btn =
+      document.getElementById("adminBtn");
+
+    const logout =
+      document.getElementById("logoutBtn");
+
+    const teamBtn =
+      document.getElementById("teamToggleBtn");
+
+    const saveTeamBtn =
+      document.getElementById("saveTeamBtn");
+
+    const editTeamBtn =
+      document.getElementById("editTeamBtn");
+
+    if(btn){
+      btn.innerText = "관리자모드";
+    }
+
+    if(logout){
+      logout.style.display = "inline-block";
+    }
+
+    if(teamBtn){
+      teamBtn.style.display = "inline-block";
+    }
+
+    if(saveTeamBtn){
+      saveTeamBtn.style.display = "inline-block";
+    }
+
+    if(editTeamBtn){
+      editTeamBtn.style.display = "inline-block";
+    }
+  }
+);
 </script>
