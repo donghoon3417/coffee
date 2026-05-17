@@ -9,14 +9,27 @@ let isCaffeine = false;
 // 버튼 활성화
 // =========================
 function checkForm(){
-  const btn = document.getElementById("saveBtn");
-  const name = document.getElementById("name").value.trim();
-  const custom = document.getElementById("customMenu").value.trim();
 
-  if(name && (selectedMenu || custom)){
+  const btn =
+    document.getElementById("saveBtn");
+
+  const custom =
+    document.getElementById("customMenu")
+      .value
+      .trim();
+
+  // 🔥 버튼 선택된 이름 사용
+  const hasName =
+    window.selectedNames &&
+    window.selectedNames.length > 0;
+
+  if(hasName && (selectedMenu || custom)){
+
     btn.disabled = false;
     btn.style.background = "#4CAF50";
+
   }else{
+
     btn.disabled = true;
     btn.style.background = "#aaa";
   }
@@ -109,15 +122,18 @@ function initDefault(){
 // 초기
 // =========================
 document.addEventListener("DOMContentLoaded", ()=>{
-  document.getElementById("name").addEventListener("input", checkForm);
 
   document.getElementById("customMenu")
     .addEventListener("input", function(){
+
       if(this.value.trim()){
+
         selectedMenu = "";
+
         document.querySelectorAll("#menuSection button")
           .forEach(b=>b.classList.remove("active"));
       }
+
       checkForm();
     });
 

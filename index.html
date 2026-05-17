@@ -2,154 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body {
-  font-size:16px;          /* 🔥 18 → 16으로 줄임 */
-  padding:12px;
-  background:#f5f5f5;
-}
-
-h4 {
-  margin:12px 0 6px;       /* 🔥 위아래 간격 줄임 */
-  font-size:15px;
-}
-
-.top-menu {
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  margin-bottom:10px;
-}
-
-.top-btn {
-  padding:10px 16px;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  background:#ccc;     /* 기본 회색 */
-  color:white;
-}
-
-/* 🔥 선택된 버튼만 핑크 */
-.top-btn.active {
-  background:#ff6b9d;
-}
-#nameButtons button {
-  white-space: nowrap;
-}
-#nameButtons button.active {
-  background: #4CAF50;
-  color: white;
-}
-
-button {
-  padding:10px;
-  margin:3px;
-  border:none;
-  border-radius:6px;
-  background:#ddd;
-}
-
-button.active { background:#4CAF50; color:white; }
-
-input {
-  width:100%;
-  padding:12px;
-  margin-bottom:10px;
-}
-
-/* 🔥 핵심 */
-#saveBtn {
-  width:100%;
-  padding:14px;
-  background:#aaa;
-  color:white;
-}
-
-table {
-  width:100%;
-  max-width:600px;   /* 🔥 줄이는 핵심 */
-  margin:10px auto;  /* 🔥 가운데 */
-  border-collapse:collapse;
-  background:white;
-}
-td, th {
-  border:1px solid #ccc;
-  padding:4px 6px;   /* 🔥 기존보다 작게 */
-  font-size:13px;    /* 🔥 살짝 축소 */
-  text-align:center;
-}
-.reset-btn {
-  background:#2196F3;  /* 파란색 */
-}
-input {
-  width:100%;
-  max-width:400px;   /* 🔥 핵심 */
-  padding:10px;
-  margin:6px auto;
-  display:block;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-/* 버튼도 같이 줄이기 */
-#saveBtn {
-  max-width:400px;
-  margin:10px auto;
-  display:block;
-  padding:12px;
-}
-button {
-  padding:8px 10px;        /* 🔥 줄임 */
-  margin:2px;
-  border:none;
-  border-radius:6px;
-  background:#ddd;
-  font-size:14px;
-}
-.section {
-  margin-bottom:10px;
-}
-.form-container {
-  max-width:420px;
-  margin:0 auto;        /* 🔥 전체 가운데 */
-}
-
-/* 제목도 가운데 */
-h4 {
-  text-align:center;
-  margin:12px 0 6px;
-}
-
-/* 버튼 그룹 가운데 */
-#menuSection,
-#tempSection,
-#sizeSection,
-#extraSection {
-  display:flex;
-  justify-content:center;   /* 🔥 핵심 */
-  flex-wrap:wrap;
-  gap:6px;
-  margin-bottom:8px;
-}
-
-/* 버튼 크기 살짝 줄이기 */
-button {
-  padding:8px 12px;
-  font-size:14px;
-}
-td button {
-  padding:4px 6px;
-  font-size:12px;
-  margin:2px;
-}
-@media (max-width:480px){
-  table {
-    font-size:12px;
-  }
-}
-</style>
+<?!= include('style'); ?>
 </head>
 
 <body>
@@ -167,9 +20,31 @@ td button {
 <div id="nameButtons"></div>
 
 <input id="newName" placeholder="이름 등록">
-<button onclick="addName()">등록하기</button>
+<div style="
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+">
 
-<button onclick="toggleTeam()">팀 관리 열기/닫기</button>
+  <button onclick="addName()">
+    등록하기
+  </button>
+
+  <button
+    onclick="deleteAllNames()"
+  >
+    이름 전체삭제
+  </button>
+
+</div>
+
+<button
+  id="teamToggleBtn"
+  onclick="toggleTeam()"
+  style="display:none;"
+>
+  팀 관리 열기/닫기
+</button>
 
 <div id="teamSection">
   <h4>👥 팀 선택</h4>
@@ -180,12 +55,34 @@ td button {
   <button onclick="saveTeam()">팀 저장</button>
 </div>
 
-<input id="name" placeholder="이름 (필수)" oninput="checkForm()">
+<h4>☕ 메뉴</h4>
 
-    <h4>☕ 메뉴</h4>
    <div id="extraSection">
-  <button onclick="toggleDecaf(this)">디카페인</button>
-  <button onclick="toggleCaffeine(this)">카페인</button> <!-- 🔥 추가 -->
+<button
+  class="caffeine-btn"
+  onclick="toggleDecaf(this)"
+>
+  디카페인
+</button>
+<button
+  class="caffeine-btn"
+  onclick="toggleCaffeine(this)"
+>
+  카페인
+</button>
+
+<div style="
+  text-align:center;
+  font-size:13px;
+  color:#666;
+  margin-bottom:10px;
+">
+
+  &lt;본인의 이름 버튼을 선택하시고 메뉴를 선택<br>
+  하신 다음 주문하기 버튼을 눌러주세요<br>
+  메뉴에 없는 메뉴는 직접 입력후 주문하기 눌러주세요
+  &gt;
+</div>
 </div>
 
     <div id="menuSection">

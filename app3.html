@@ -59,53 +59,84 @@ function save(){
 
   const btn = document.getElementById("saveBtn");
 
-  // 🔥 클릭하자마자 변경
   btn.innerText = "주문중...";
   btn.disabled = true;
 
-  const nameValue = document.getElementById("name").value.trim();
-  const customMenu = document.getElementById("customMenu").value.trim();
+  const customMenu =
+    document.getElementById("customMenu").value.trim();
 
   const finalMenu =
-    (isDecaf ? "디카페인 " : isCaffeine ? "카페인 " : "") +
+    (isDecaf ? "디카페인 " :
+      isCaffeine ? "카페인 " : "") +
     (selectedMenu || customMenu);
 
-  if(!nameValue){
+  // 🔥 버튼으로 선택된 이름 사용
+  const names = window.selectedNames || [];
+
+  // 이름 체크
+  if(names.length === 0){
+
     alert("이름이 선택되지 않았습니다");
-    btn.innerText = "주문하기";   // 🔥 복구
+
+    btn.innerText = "주문하기";
     btn.disabled = false;
+
     return;
   }
 
+  // 메뉴 체크
   if(!selectedMenu && !customMenu){
+
     alert("메뉴가 선택되지 않았습니다");
-    btn.innerText = "주문하기";   // 🔥 복구
+
+    btn.innerText = "주문하기";
     btn.disabled = false;
+
     return;
   }
 
   const data = {
-    names: nameValue.split(",").map(x=>x.trim()).filter(x=>x),
+
+    names: names,
+
     menu: finalMenu,
+
     temp: selectedTemp,
+
     size: selectedSize,
-    option: document.getElementById("option").value,
-    note: document.getElementById("note").value
+
+    option:
+      document.getElementById("option").value,
+
+    note:
+      document.getElementById("note").value
   };
 
   google.script.run
+
     .withSuccessHandler(()=>{
-      btn.innerText = "주문하기";   // 🔥 완료 후 복구
+
+      btn.innerText = "주문하기";
       btn.disabled = false;
 
+      // 선택 초기화
+      window.selectedNames = [];
+
+      highlightSelected();
+
       fullData = [];
+
       loadList();
+
       showList();
     })
+
     .withFailureHandler(()=>{
-      btn.innerText = "주문하기";   // 🔥 실패 시 복구
+
+      btn.innerText = "주문하기";
       btn.disabled = false;
     })
+
     .saveOrder(data);
 }
 // =========================

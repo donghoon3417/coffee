@@ -97,6 +97,31 @@ function addName(){
   renderNameButtons();
 }
 
+function deleteAllNames(){
+
+  if(!confirm("등록된 이름 전체 삭제할까요?")){
+    return;
+  }
+
+  window.nameList = [];
+
+  window.selectedNames = [];
+
+  google.script.run
+    .withSuccessHandler(()=>{
+
+      renderNameButtons();
+
+      highlightSelected();
+
+      checkForm();
+
+      alert("전체 삭제 완료");
+
+    })
+    .saveNamesToServer([]);
+}
+
 // =========================
 // input 반영
 // =========================

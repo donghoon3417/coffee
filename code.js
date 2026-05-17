@@ -16,7 +16,7 @@ function saveOrder(data) {
   const time = Utilities.formatDate(new Date(), "Asia/Seoul", "HH:mm:ss");
 
   // 🔥 여기서 변경
-  data.names.forEach(name=>{
+  data.names.forEach(name => {
     sheet.appendRow([
       time,
       name,
@@ -30,7 +30,7 @@ function saveOrder(data) {
 }
 
 // 🔥 전체 데이터 + 집계 한번에
-function getAllData(){
+function getAllData() {
 
   return {
     orders: getOrders(),
@@ -41,56 +41,66 @@ function getAllData(){
 // 전체 조회
 function getOrders() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  return sheet.getDataRange().getDisplayValues().map((r,i)=>[...r,i]);
+  return sheet.getDataRange().getDisplayValues().map((r, i) => [...r, i]);
 }
 
 // 삭제
-function deleteRow(rowIndex){
+function deleteRow(rowIndex) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   sheet.deleteRow(rowIndex + 1);
 }
 
-function deleteMultiple(indexes){
+function deleteMultiple(indexes) {
 
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const sheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
 
-  indexes.sort((a,b)=> b - a);
+  // 큰 번호부터 삭제
+  indexes
+    .sort((a, b) => b - a)
+    .forEach(i => {
 
-  indexes.forEach(i=>{
-    sheet.deleteRow(i + 1);
-  });
+      // 헤더 제외 +1
+      const rowNumber = i + 1;
+
+      if(rowNumber > 1){
+        sheet.deleteRow(rowNumber);
+      }
+    });
 }
 
 // 주문 마감
-function setOrderClosed(state){
+function setOrderClosed(state) {
   const prop = PropertiesService.getScriptProperties();
   prop.setProperty("ORDER_CLOSED", state ? "true" : "false");
 }
 
-function getOrderClosed(){
+function getOrderClosed() {
   const prop = PropertiesService.getScriptProperties();
   return prop.getProperty("ORDER_CLOSED") === "true";
 }
 
 // 카톡 텍스트
-function getOrderText(){
+function getOrderText() {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   const data = sheet.getDataRange().getValues().slice(1);
 
   const result = {};
 
-  data.forEach(r=>{
+  data.forEach(r => {
     const key = `${r[3]} ${r[2]} ${r[4]}`;
     const name = r[1];
 
-    if(!result[key]) result[key] = [];
+    if (!result[key]) result[key] = [];
     result[key].push(name);
   });
 
   let text = "☕ 커피 주문\n────────────\n";
 
-  Object.keys(result).sort().forEach(k=>{
+  Object.keys(result).sort().forEach(k => {
     text += `\n📌 ${k} (${result[k].length}잔)\n`;
     text += `${result[k].join(", ")}\n`;
   });
@@ -101,30 +111,30 @@ function getOrderText(){
 }
 
 // 전체 삭제
-function resetAllOrders(){
+function resetAllOrders() {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   const lastRow = sheet.getLastRow();
 
-  if(lastRow > 1){
+  if (lastRow > 1) {
     sheet.deleteRows(2, lastRow - 1);
   }
 }
 
 // 집계
-function getSummary(){
+function getSummary() {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   const data = sheet.getDataRange().getValues().slice(1);
 
   const result = {};
 
-  data.forEach(r=>{
+  data.forEach(r => {
 
     const key = `${r[3]} ${r[2]} ${r[4]}`;
     const name = r[1];
 
-    if(!result[key]){
+    if (!result[key]) {
       result[key] = { count: 0, names: [] };
     }
 
@@ -135,14 +145,40 @@ function getSummary(){
   return result;
 }
 
-function saveTeamsToServer(teams){
+function saveTeamsToServer(teams) {
   const prop = PropertiesService.getScriptProperties();
   prop.setProperty("TEAMS", JSON.stringify(teams));
 }
 
-function getTeamsFromServer(){
+function getTeamsFromServer() {
   const prop = PropertiesService.getScriptProperties();
   return JSON.parse(prop.getProperty("TEAMS") || "{}");
 }
 
 
+// =========================
+// 이름 저장
+// =========================
+function saveNamesToServer(names) {
+
+  const prop = PropertiesService.getScriptProperties();
+
+  prop.setProperty(
+    "NAME_LIST",
+    JSON.stringify(names)
+  );
+
+  return names;
+}
+
+// =========================
+// 이름 불러오기
+// =========================
+function getNamesFromServer() {
+
+  const prop = PropertiesService.getScriptProperties();
+
+  return JSON.parse(
+    prop.getProperty("NAME_LIST") || "[]"
+  );
+}
