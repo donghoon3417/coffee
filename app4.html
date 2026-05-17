@@ -1,12 +1,37 @@
 <script>
-window.selectedNames = [];
-window.nameList = JSON.parse(
-  localStorage.getItem("nameList") || "[]"
-);
-window.hiddenNames =
-  JSON.parse(
+window.appState = window.appState || {
+  nameList: [],
+  selectedNames: [],
+  hiddenNames: JSON.parse(
     sessionStorage.getItem("hiddenNames") || "[]"
-  );
+  ),
+  isAdmin:
+    sessionStorage.getItem("isAdmin") === "true"
+};
+
+// =========================
+// 상태 별칭
+// =========================
+Object.defineProperties(window, {
+  nameList: {
+    get: ()=>window.appState.nameList,
+    set: v=>window.appState.nameList = v
+  },
+  selectedNames: {
+    get: ()=>window.appState.selectedNames,
+    set: v=>window.appState.selectedNames = v
+  },
+  hiddenNames: {
+    get: ()=>window.appState.hiddenNames,
+    set: v=>window.appState.hiddenNames = v
+  }
+});
+
+// =========================
+// 초기 데이터 로드
+// =========================
+window.nameList = [];
+localStorage.removeItem("nameList");
 
 // =========================
 // 이름 버튼 렌더링
@@ -20,15 +45,14 @@ function renderNameButtons(){
 
   box.innerHTML = "";
 
-const list =
-  (Array.isArray(window.nameList)
-    ? window.nameList
-    : [])
-  .filter(
-    name => !window.hiddenNames.includes(name)
-  );
+  const visibleList =
+    window.nameList.filter(
+      name =>
+        !window.hiddenNames.includes(name) ||
+        window.selectedNames.includes(name)
+    );
 
-  list.forEach(name => {
+  visibleList.forEach(name => {
 
     const wrap =
       document.createElement("div");
@@ -44,9 +68,10 @@ const list =
 
     btn.innerText = name;
 
-    if(window.selectedNames.includes(name)){
-      btn.classList.add("active");
-    }
+    btn.classList.toggle(
+      "active",
+      window.selectedNames.includes(name)
+    );
 
     btn.onclick = ()=>{
 
@@ -62,9 +87,9 @@ const list =
         window.selectedNames.push(name);
       }
 
-      updateNameInput();
-
       highlightSelected();
+
+      updateNameInput();
 
       checkForm();
     };
@@ -80,39 +105,42 @@ const list =
     del.style.background = "#ff4d4f";
     del.style.color = "white";
     del.style.marginLeft = "3px";
-del.onclick = ()=>{
 
-  if(!confirm(name + " 이름을 숨길까요?")){
-    return;
-  }
+    del.onclick = ()=>{
 
-  // 숨김목록 추가
-  if(!window.hiddenNames.includes(name)){
+      if(
+        !confirm(name + " 이름을 숨길까요?")
+      ){
+        return;
+      }
 
-    window.hiddenNames.push(name);
-  }
+      if(
+        !window.hiddenNames.includes(name)
+      ){
+        window.hiddenNames.push(name);
+      }
 
-  sessionStorage.setItem(
-    "hiddenNames",
-    JSON.stringify(window.hiddenNames)
-  );
+      window.selectedNames =
+        window.selectedNames.filter(
+          n => n !== name
+        );
 
-  // 선택 제거
-  window.selectedNames =
-    window.selectedNames.filter(
-      n => n !== name
-    );
+      sessionStorage.setItem(
+        "hiddenNames",
+        JSON.stringify(window.hiddenNames)
+      );
 
-  renderNameButtons();
+      renderNameButtons();
 
-  updateNameInput();
+      highlightSelected();
 
-  highlightSelected();
+      updateNameInput();
 
-  checkForm();
-};
+      checkForm();
+    };
 
     wrap.appendChild(btn);
+
     wrap.appendChild(del);
 
     box.appendChild(wrap);
@@ -120,34 +148,51 @@ del.onclick = ()=>{
 }
 
 // =========================
-// 선택 UI 표시
+// 선택 강조
 // =========================
 function highlightSelected(){
 
-  const box =
-    document.getElementById("nameButtons");
+  document
+    .querySelectorAll(
+      "#nameButtons button"
+    )
+    .forEach(btn => {
 
-  if(!box) return;
+      if(btn.innerText === "✖") return;
 
-  const buttons =
-    box.querySelectorAll(
-      "div > button:first-child"
+      btn.classList.toggle(
+        "active",
+        window.selectedNames.includes(
+          btn.innerText.trim()
+        )
+      );
+    });
+}
+
+// =========================
+// input 반영
+// =========================
+function updateNameInput(){
+
+  const el =
+    document.getElementById("name");
+
+  if(el){
+
+    el.value =
+      window.selectedNames.join(", ");
+  }
+
+  const el2 =
+    document.getElementById(
+      "selectedNames"
     );
 
-  buttons.forEach(btn => {
+  if(el2){
 
-    const name =
-      btn.innerText.trim();
-
-    if(window.selectedNames.includes(name)){
-
-      btn.classList.add("active");
-
-    }else{
-
-      btn.classList.remove("active");
-    }
-  });
+    el2.value =
+      window.selectedNames.join(", ");
+  }
 }
 
 // =========================
@@ -158,16 +203,20 @@ function addName(){
   const input =
     document.getElementById("newName");
 
+  if(!input) return;
+
   const name =
     input.value.trim();
 
   if(!name) return;
 
-  // 이미 존재하는 이름
+  // 이미 존재
   if(window.nameList.includes(name)){
 
-    // 숨김 상태면 복구
-    if(window.hiddenNames.includes(name)){
+    // 숨김 복구
+    if(
+      window.hiddenNames.includes(name)
+    ){
 
       window.hiddenNames =
         window.hiddenNames.filter(
@@ -188,26 +237,34 @@ function addName(){
       alert("이미 있음");
     }
 
+    input.value = "";
+
     return;
   }
 
   // 신규 추가
-  window.nameList.push(name);
-
-  localStorage.setItem(
-    "nameList",
-    JSON.stringify(window.nameList)
-  );
+  const newList = [
+    ...window.nameList,
+    name
+  ];
 
   google.script.run
-    .withSuccessHandler(()=>{
+
+    .withSuccessHandler((res)=>{
+
+      window.nameList = res || newList;
+
+      localStorage.setItem(
+        "nameList",
+        JSON.stringify(window.nameList)
+      );
 
       renderNameButtons();
 
+      input.value = "";
     })
-    .saveNamesToServer(window.nameList);
 
-  input.value = "";
+    .saveNamesToServer(newList);
 }
 
 // =========================
@@ -215,7 +272,11 @@ function addName(){
 // =========================
 function deleteAllNames(){
 
-  if(!confirm("등록된 이름 전체 삭제할까요?")){
+  if(
+    !confirm(
+      "등록된 이름 전체 삭제할까요?"
+    )
+  ){
     return;
   }
 
@@ -225,10 +286,11 @@ function deleteAllNames(){
 
   localStorage.setItem(
     "nameList",
-    JSON.stringify(window.nameList)
+    JSON.stringify([])
   );
 
   google.script.run
+
     .withSuccessHandler(()=>{
 
       renderNameButtons();
@@ -240,24 +302,9 @@ function deleteAllNames(){
       checkForm();
 
       alert("전체 삭제 완료");
-
     })
+
     .saveNamesToServer([]);
-}
-
-// =========================
-// input 반영
-// =========================
-function updateNameInput(){
-
-  const el =
-    document.getElementById("name");
-
-  if(el){
-
-    el.value =
-      window.selectedNames.join(", ");
-  }
 }
 
 // =========================
@@ -270,6 +317,8 @@ document.addEventListener(
     renderNameButtons();
 
     highlightSelected();
+
+    updateNameInput();
   }
 );
 </script>
