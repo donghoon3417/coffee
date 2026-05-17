@@ -2,12 +2,17 @@
 function renderList(data, summary){
   drawTable(data.slice(1));
   drawSummary(summary);
+
+  updateSaveButton();
 }
 
 // =========================
 function drawTable(data){
 
-  let html = `<table>
+  let html = `
+  <div class="table-wrap">
+
+  <table>
   <tr>
     <th>선택</th>
     <th>시간</th>
@@ -20,10 +25,18 @@ function drawTable(data){
   </tr>`;
 
   data.slice().reverse().forEach(row=>{
+
     const idx = row[row.length-1];
 
     html += "<tr>";
-    html += `<td><input type="checkbox" class="rowCheck" value="${idx}"></td>`;
+
+    html += `
+    <td>
+      <input
+        type="checkbox"
+        class="rowCheck"
+        value="${idx}">
+    </td>`;
 
     for(let i=0;i<row.length-1;i++){
       html += `<td>${row[i]}</td>`;
@@ -32,7 +45,10 @@ function drawTable(data){
     html += "</tr>";
   });
 
-  html += "</table>";
+  html += `
+  </table>
+
+  </div>`;
 
   document.getElementById("list").innerHTML = html;
 }
@@ -40,25 +56,93 @@ function drawTable(data){
 // =========================
 function drawSummary(res){
 
-let html = `<div class="summary-box">
-  <h3>📊 주문 집계</h3>`;
+let html = `
+<div class="summary-box">
 
-  Object.entries(res)
-    .sort((a,b)=>b[1].count-a[1].count)
-    .forEach(([k,v])=>{
-html += `<div class="summary-item"><b>${k} (${v.count})</b><br>${v.names.join(", ")}</div>`;
-    });
+<h3>📊 주문 집계</h3>
+`;
+
+let totalCount = 0;
+
+Object.entries(res)
+
+.sort((a,b)=>b[1].count-a[1].count)
+
+.forEach(([k,v])=>{
+
+  totalCount += v.count;
 
   html += `
-  <button onclick="copyOrder()">카톡 복사</button>
-  <button onclick="deleteChecked()">선택 삭제</button>
-  <button onclick="resetOrders()">전체 삭제</button>
-  <button id="closeBtn" onclick="toggleOrderClose()">주문 마감</button>
-  </div>`;
 
-  document.getElementById("list").insertAdjacentHTML("afterbegin", html);
+  <div class="summary-item">
+
+    <b>
+      ${k} ${v.count}잔
+    </b>
+
+    <span class="summary-names">
+      (${v.names.join(", ")})
+    </span>
+
+  </div>
+  `;
+});
+
+html += `
+
+<div class="summary-total">
+  현재 총 주문 수 : ${totalCount}잔
+</div>
+
+<div class="summary-actions">
+
+  <button onclick="copyOrder()">
+    카톡 복사
+  </button>
+
+  <button onclick="deleteChecked()">
+    선택 삭제
+  </button>
+
+  <button onclick="resetOrders()">
+    전체 삭제
+  </button>
+
+  <button
+    id="closeBtn"
+    onclick="toggleOrderClose()">
+
+    주문 마감
+
+  </button>
+
+</div>
+
+</div>
+`;
+
+document
+.getElementById("list")
+.insertAdjacentHTML("afterbegin", html);
 }
 
+function updateSaveButton(){
+
+  const btn = document.getElementById("saveBtn");
+
+  if(!btn) return;
+
+  if(isOrderClosed){
+
+    btn.disabled = true;
+    btn.innerText = "주문이 마감됨";
+
+  }else{
+
+    btn.disabled = false;
+    btn.innerText = "주문하기";
+  }
+}
 // =========================
 function deleteChecked(){
 

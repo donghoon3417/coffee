@@ -1,6 +1,7 @@
 <script>
 let fullData = [];
 let summaryData = {};
+let isOrderClosed = false;
 
 // =========================
 function showForm(){
@@ -174,29 +175,48 @@ function updateCloseUI(isClosed){
 
   const btn = document.getElementById("closeBtn");
 
+  const saveBtn =
+    document.getElementById("saveBtn");
+
+  // 🔥 추가
+  if(!saveBtn) return;
+
   const all = document.querySelectorAll(
     "#formPage button, #formPage input"
   );
 
   if(isClosed){
+
     btn.innerText = "주문 마감됨";
     btn.style.background = "#f44336";
+
     btn.classList.add("closed");
 
     all.forEach(el=>{
-      if(el.id !== "closeBtn"){
+
+      if(
+        el.id !== "closeBtn" &&
+        el.id !== "saveBtn"
+      ){
         el.disabled = true;
       }
     });
 
+    saveBtn.disabled = true;
+    saveBtn.innerText = "주문이 마감됨";
+
   }else{
+
     btn.innerText = "주문 마감";
     btn.style.background = "#4CAF50";
+
     btn.classList.remove("closed");
 
     all.forEach(el=>{
       el.disabled = false;
     });
+
+    saveBtn.innerText = "주문하기";
   }
 }
 function loadCloseState(){
