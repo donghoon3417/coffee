@@ -1,11 +1,21 @@
 <script>
 window.nameList = window.nameList || [];
 window.selectedNames = window.selectedNames || [];
+
 window.hiddenNames =
   JSON.parse(
     sessionStorage.getItem("hiddenNames") || "[]"
   );
 
+// =========================
+// 관리자 상태
+// =========================
+window.isAdmin =
+  sessionStorage.getItem("isAdmin") === "true";
+
+// =========================
+// 이름 버튼 렌더링
+// =========================
 function renderNameButtons(){
 
   const box =
@@ -53,7 +63,9 @@ function renderNameButtons(){
       }
 
       highlightSelected();
+
       updateNameInput();
+
       checkForm();
     };
 
@@ -66,45 +78,49 @@ function renderNameButtons(){
     del.style.color = "white";
     del.style.marginLeft = "3px";
 
-del.onclick = () => {
+    del.onclick = () => {
 
-  // 중복 방지
-  if(
-    !window.hiddenNames.includes(name)
-  ){
+      // 중복 방지
+      if(
+        !window.hiddenNames.includes(name)
+      ){
 
-    window.hiddenNames.push(name);
-  }
+        window.hiddenNames.push(name);
+      }
 
-  // 선택 해제
-  window.selectedNames =
-    window.selectedNames.filter(
-      n => n !== name
-    );
+      // 선택 해제
+      window.selectedNames =
+        window.selectedNames.filter(
+          n => n !== name
+        );
 
-  // 저장
-  sessionStorage.setItem(
-    "hiddenNames",
-    JSON.stringify(window.hiddenNames)
-  );
+      // 저장
+      sessionStorage.setItem(
+        "hiddenNames",
+        JSON.stringify(window.hiddenNames)
+      );
 
-  // UI 즉시 갱신
-  renderNameButtons();
+      // UI 즉시 갱신
+      renderNameButtons();
 
-  highlightSelected();
+      highlightSelected();
 
-  updateNameInput();
+      updateNameInput();
 
-  checkForm();
-};
+      checkForm();
+    };
 
     wrap.appendChild(btn);
+
     wrap.appendChild(del);
 
     box.appendChild(wrap);
   });
 }
 
+// =========================
+// 선택 강조
+// =========================
 function highlightSelected(){
 
   document
@@ -122,6 +138,9 @@ function highlightSelected(){
     });
 }
 
+// =========================
+// input 갱신
+// =========================
 function updateNameInput(){
 
   const input =
@@ -133,6 +152,9 @@ function updateNameInput(){
     window.selectedNames.join(", ");
 }
 
+// =========================
+// 이름 추가
+// =========================
 function addName(){
 
   const input =
@@ -184,8 +206,6 @@ function addName(){
 
     .saveNamesToServer(newList);
 }
-window.isAdmin =
-  localStorage.getItem("isAdmin") === "true";
 
 // =========================
 // 관리자 로그인
@@ -195,56 +215,32 @@ function adminLogin(){
   const pw =
     prompt("관리자 비밀번호");
 
-  if(pw === "3417"){
+  if(!pw) return;
 
-    window.isAdmin = true;
+  google.script.run
 
-    localStorage.setItem(
-      "isAdmin",
-      "true"
-    );
+    .withSuccessHandler((result)=>{
 
-    const btn =
-      document.getElementById("adminBtn");
+      if(result){
 
-    const logout =
-      document.getElementById("logoutBtn");
+        window.isAdmin = true;
 
-    const teamBtn =
-      document.getElementById("teamToggleBtn");
+        sessionStorage.setItem(
+          "isAdmin",
+          "true"
+        );
 
-    const saveTeamBtn =
-      document.getElementById("saveTeamBtn");
+        applyAdminUI();
 
-    const editTeamBtn =
-      document.getElementById("editTeamBtn");
+        alert("관리자 로그인 완료");
 
-    if(btn){
-      btn.innerText = "관리자모드";
-    }
+      }else{
 
-    if(logout){
-      logout.style.display = "inline-block";
-    }
+        alert("비밀번호 틀림");
+      }
+    })
 
-    if(teamBtn){
-      teamBtn.style.display = "inline-block";
-    }
-
-    if(saveTeamBtn){
-      saveTeamBtn.style.display = "inline-block";
-    }
-
-    if(editTeamBtn){
-      editTeamBtn.style.display = "inline-block";
-    }
-
-    alert("관리자 로그인 완료");
-
-  }else{
-
-    alert("비밀번호 틀림");
-  }
+    .checkAdmin(pw);
 }
 
 // =========================
@@ -254,7 +250,58 @@ function adminLogout(){
 
   window.isAdmin = false;
 
-  localStorage.removeItem("isAdmin");
+  sessionStorage.removeItem("isAdmin");
+
+  removeAdminUI();
+
+  alert("관리자 로그아웃");
+}
+
+// =========================
+// 관리자 UI 적용
+// =========================
+function applyAdminUI(){
+
+  const btn =
+    document.getElementById("adminBtn");
+
+  const logout =
+    document.getElementById("logoutBtn");
+
+  const teamBtn =
+    document.getElementById("teamToggleBtn");
+
+  const saveTeamBtn =
+    document.getElementById("saveTeamBtn");
+
+  const editTeamBtn =
+    document.getElementById("editTeamBtn");
+
+  if(btn){
+    btn.innerText = "관리자모드";
+  }
+
+  if(logout){
+    logout.style.display = "inline-block";
+  }
+
+  if(teamBtn){
+    teamBtn.style.display = "inline-block";
+  }
+
+  if(saveTeamBtn){
+    saveTeamBtn.style.display = "inline-block";
+  }
+
+  if(editTeamBtn){
+    editTeamBtn.style.display = "inline-block";
+  }
+}
+
+// =========================
+// 관리자 UI 제거
+// =========================
+function removeAdminUI(){
 
   const btn =
     document.getElementById("adminBtn");
@@ -290,8 +337,6 @@ function adminLogout(){
   if(editTeamBtn){
     editTeamBtn.style.display = "none";
   }
-
-  alert("관리자 로그아웃");
 }
 
 // =========================
@@ -301,42 +346,24 @@ document.addEventListener(
   "DOMContentLoaded",
   ()=>{
 
-    if(!window.isAdmin) return;
+    if(window.isAdmin){
 
-    const btn =
-      document.getElementById("adminBtn");
+      applyAdminUI();
 
-    const logout =
-      document.getElementById("logoutBtn");
+    }else{
 
-    const teamBtn =
-      document.getElementById("teamToggleBtn");
-
-    const saveTeamBtn =
-      document.getElementById("saveTeamBtn");
-
-    const editTeamBtn =
-      document.getElementById("editTeamBtn");
-
-    if(btn){
-      btn.innerText = "관리자모드";
+      removeAdminUI();
     }
+  }
+);
 
-    if(logout){
-      logout.style.display = "inline-block";
-    }
-
-    if(teamBtn){
-      teamBtn.style.display = "inline-block";
-    }
-
-    if(saveTeamBtn){
-      saveTeamBtn.style.display = "inline-block";
-    }
-
-    if(editTeamBtn){
-      editTeamBtn.style.display = "inline-block";
-    }
+// =========================
+// 탭 종료시 자동 로그아웃
+// =========================
+window.addEventListener(
+  "beforeunload",
+  ()=>{
+    sessionStorage.removeItem("isAdmin");
   }
 );
 </script>

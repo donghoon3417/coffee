@@ -121,6 +121,12 @@ function resetAllOrders() {
   }
 }
 
+// code.js
+function checkAdmin(password) {
+  const ADMIN_PW = "3417";
+  return password === ADMIN_PW;
+}
+
 // 집계
 function getSummary() {
 
