@@ -7,134 +7,242 @@
 
 <body>
 
-<div class="top-menu">
-  <button id="formBtn" class="top-btn active" onclick="showForm()">주문하기</button>
-  <button id="listBtn" class="top-btn" onclick="showList()">주문목록</button>
-  <button id="adminBtn" onclick="adminLogin()">관리자</button>
-<button id="logoutBtn" onclick="adminLogout()" style="display:none;">로그아웃</button>
-
+<div class="header-title">
+☕ COFFEE ORDER
 </div>
-<div id="formPage">
-  <div class="form-container">  <!-- 🔥 이거 추가 -->
-<h4>👤 이름 선택</h4>
-<div id="nameButtons"></div>
 
-<input id="newName" placeholder="이름 등록">
-<div style="
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-">
+<div class="top-menu">
+  <button id="formBtn" class="top-btn active" onclick="showForm()">
+    주문하기
+  </button>
 
-  <button onclick="addName()">
-    등록하기
+  <button id="listBtn" class="top-btn" onclick="showList()">
+    주문목록
+  </button>
+
+  <button id="adminBtn" onclick="adminLogin()">
+    관리자
   </button>
 
   <button
-    onclick="deleteAllNames()"
+    id="logoutBtn"
+    onclick="adminLogout()"
+    style="display:none;"
   >
-    이름 전체삭제
+    로그아웃
   </button>
-
 </div>
 
-<button
-  id="teamToggleBtn"
-  onclick="toggleTeam()"
-  style="display:none;"
->
-  팀 관리 열기/닫기
-</button>
+<div id="formPage">
 
-<div id="teamSection">
-  <h4>👥 팀 선택</h4>
+  <div class="form-container">
 
-  <div id="teamButtons"></div>
+    <!-- =========================
+         이름 선택
+    ========================== -->
 
-  <h3>팀 관리</h3>
-  <button onclick="saveTeam()">팀 저장</button>
-</div>
+    <h4>👤 이름 선택</h4>
 
-<h4>☕ 메뉴</h4>
+    <div id="nameButtons"></div>
 
-   <div id="extraSection">
-<button
-  class="caffeine-btn"
-  onclick="toggleDecaf(this)"
->
-  디카페인
-</button>
-<button
-  class="caffeine-btn"
-  onclick="toggleCaffeine(this)"
->
-  카페인
-</button>
+    <div style="
+      display:flex;
+      gap:6px;
+      align-items:center;
+      margin-bottom:8px;
+    ">
 
-<div style="
-  text-align:center;
-  font-size:13px;
-  color:#666;
-  margin-bottom:10px;
-">
+      <input
+        id="newName"
+        placeholder="이름 등록"
+        style="
+          flex:1;
+          margin:0;
+          max-width:none;
+        "
+      >
 
-  &lt;본인의 이름 버튼을 선택하시고 메뉴를 선택<br>
-  하신 다음 주문하기 버튼을 눌러주세요<br>
-  메뉴에 없는 메뉴는 직접 입력후 주문하기 눌러주세요
-  &gt;
-</div>
-</div>
+      <button onclick="addName()">
+        이름등록
+      </button>
 
-    <div id="menuSection">
-      <button onclick="selectMenu(this,'아메리카노')">아메리카노</button>
-      <button onclick="selectMenu(this,'카페라떼')">카페라떼</button>
-      <button onclick="selectMenu(this,'바닐라라떼')">바닐라라떼</button>
-      <button onclick="selectMenu(this,'카라멜마끼아또')">카라멜마끼아또</button>
+      <button onclick="deleteAllNames()">
+        이름삭제
+      </button>
+
     </div>
 
-<div style="display:flex; justify-content:center; gap:40px;">
+    <!-- =========================
+         팀 관리
+    ========================== -->
 
-  <div>
-    <h4>🔥 HOT / ❄ ICE</h4>
-    <div id="tempSection">
-      <button onclick="selectTemp(this,'HOT')">HOT</button>
-      <button onclick="selectTemp(this,'ICE')">ICE</button>
+    <button
+      id="teamToggleBtn"
+      onclick="toggleTeam()"
+      style="display:none;"
+    >
+      팀 관리 열기/닫기
+    </button>
+
+    <div id="teamSection">
+
+      <h4>👥 팀 선택</h4>
+
+      <div id="teamButtons"></div>
+
+      <h3>팀 관리</h3>
+
+      <button onclick="saveTeam()">
+        팀 저장
+      </button>
+
     </div>
-  </div>
 
-  <div>
-    <h4>📏 사이즈</h4>
-    <div id="sizeSection">
-      <button onclick="selectSize(this,'S')">S</button>
-      <button onclick="selectSize(this,'M')">M</button>
-      <button onclick="selectSize(this,'L')">L</button>
+    <!-- =========================
+         메뉴
+    ========================== -->
+
+    <h4>🍵 메뉴</h4>
+
+    <div id="extraSection">
+
+      <button
+        class="caffeine-btn"
+        onclick="toggleDecaf(this)"
+      >
+        디카페인
+      </button>
+
+      <button
+        class="caffeine-btn active"
+        onclick="toggleCaffeine(this)"
+      >
+        카페인
+      </button>
+
+      <button
+        class="caffeine-btn"
+        onclick="toggleNormalDrink(this)"
+      >
+        일반음료
+      </button>
+
     </div>
-  </div>
 
-</div>
+    <!-- 🔥 안내문 분리 -->
+    <div class="info-text">
 
+      &lt;본인의 이름 버튼을 선택한 후 메뉴를 선택해주세요.&gt;<br>
+      &lt;메뉴 선택 후 주문하기 버튼을 눌러주세요.&gt;<br>
+      &lt;버튼이 없는 메뉴는 직접 입력 후 주문해주세요.&gt;
+
+    </div>
+
+    <!-- 메뉴 버튼 -->
+    <div id="menuSection"></div>
+
+    <!-- =========================
+         온도 / 사이즈
+    ========================== -->
+
+    <div style="
+      display:flex;
+      justify-content:center;
+      gap:30px;
+      flex-wrap:wrap;
+    ">
+
+      <div>
+
+        <h4>🔥 HOT / ❄ ICE</h4>
+
+        <div id="tempSection">
+
+          <button onclick="selectTemp(this,'HOT')">
+            HOT
+          </button>
+
+          <button onclick="selectTemp(this,'ICE')">
+            ICE
+          </button>
+
+        </div>
+
+      </div>
+
+      <div>
+
+        <h4>📏 사이즈</h4>
+
+        <div id="sizeSection">
+
+          <button onclick="selectSize(this,'S')">
+            S
+          </button>
+
+          <button onclick="selectSize(this,'M')">
+            M
+          </button>
+
+          <button onclick="selectSize(this,'L')">
+            L
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =========================
+         기타 입력
+    ========================== -->
 
     <h4>✍️ 기타 메뉴</h4>
-    <input id="customMenu" placeholder="직접 입력 (기타 메뉴)">
 
-    <input id="option" placeholder="옵션">
-    <input id="note" placeholder="요청사항">
+    <input
+      id="customMenu"
+      placeholder="직접 입력 (기타 메뉴)"
+    >
 
-    <button id="saveBtn" onclick="save()" disabled>주문하기</button>
+    <input
+      id="option"
+      placeholder="옵션"
+    >
+
+    <input
+      id="note"
+      placeholder="요청사항"
+    >
+
+    <button
+      id="saveBtn"
+      onclick="save()"
+      disabled
+    >
+      주문하기
+    </button>
 
   </div>
+
 </div>
+
+<!-- =========================
+     주문목록
+========================== -->
 
 <div id="listPage" style="display:none;">
   <div id="list"></div>
 </div>
 
+<!-- =========================
+     메뉴 스크립트
+========================== -->
 <?!= include('app1'); ?>
+<?!= include('app2'); ?>
 <?!= include('app3'); ?>
 <?!= include('app4'); ?>
 <?!= include('app5'); ?>
-<?!= include('app2'); ?>
-
 
 </body>
 </html>

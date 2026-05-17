@@ -40,13 +40,13 @@ function drawTable(data){
 // =========================
 function drawSummary(res){
 
-  let html = `<div style="background:white;padding:10px;margin:10px auto;max-width:600px;text-align:center;">
+let html = `<div class="summary-box">
   <h3>📊 주문 집계</h3>`;
 
   Object.entries(res)
     .sort((a,b)=>b[1].count-a[1].count)
     .forEach(([k,v])=>{
-      html += `<div><b>${k} (${v.count})</b><br>${v.names.join(", ")}</div>`;
+html += `<div class="summary-item"><b>${k} (${v.count})</b><br>${v.names.join(", ")}</div>`;
     });
 
   html += `

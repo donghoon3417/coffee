@@ -65,10 +65,11 @@ function save(){
   const customMenu =
     document.getElementById("customMenu").value.trim();
 
-  const finalMenu =
-    (isDecaf ? "디카페인 " :
-      isCaffeine ? "카페인 " : "") +
-    (selectedMenu || customMenu);
+const finalMenu =
+  (isDecaf ? "디카페인 " :
+    isCaffeine ? "카페인 " :
+    isNormalDrink ? "일반음료 " : "") +
+  (selectedMenu || customMenu);
 
   // 🔥 버튼으로 선택된 이름 사용
   const names = window.selectedNames || [];
