@@ -2,7 +2,6 @@
   window.teams = {};
   window.currentTeam = null;
   window.isAdmin = localStorage.getItem("isAdmin") === "true";
-  window.nameList = [];
 
   // =========================
   // 서버에서 팀 불러오기
@@ -26,20 +25,20 @@
   // =========================
   // 서버에서 이름 불러오기
   // =========================
-  function loadNames() {
-    google.script.run
-      .withSuccessHandler((res) => {
-        const before = JSON.stringify(window.nameList);
-        const after = JSON.stringify(res || []);
+function loadNames() {
 
-        if (before !== after) {
-          window.nameList = res || [];
+  google.script.run
 
-          renderNameButtons();
-        }
-      })
-      .getNamesFromServer();
-  }
+    .withSuccessHandler((res) => {
+
+      // 🔥 서버값으로 완전 교체
+      window.nameList = res || [];
+
+      renderNameButtons();
+    })
+
+    .getNamesFromServer();
+}
 
   // =========================
   // 팀 저장
@@ -92,31 +91,26 @@
 
       btn.innerText = t;
 
-      btn.onclick = () => {
-        window.currentTeam = t;
+btn.onclick = () => {
 
-        let members = window.teams[t];
+  window.currentTeam = t;
 
-        if (typeof members === "string") {
-          members = members
-            .split(",")
-            .map((x) => x.trim())
-            .filter((x) => x);
-        }
+  let members = window.teams[t];
 
-        // 이름목록 서버 동기화
-        window.nameList = Array.from(new Set([...window.nameList, ...members]));
+  if (typeof members === "string") {
 
-        google.script.run.saveNamesToServer(window.nameList);
+    members = members
+      .split(",")
+      .map((x) => x.trim())
+      .filter((x) => x);
+  }
 
-        window.selectedNames = Array.from(
-          new Set([...window.selectedNames, ...members]),
-        );
+window.selectedNames = [...members];
 
-        renderNameButtons();
-        updateNameInput();
-        highlightSelected();
-      };
+  renderNameButtons();
+  updateNameInput();
+  highlightSelected();
+};
 
       const del = document.createElement("button");
 
@@ -151,6 +145,81 @@
     });
   }
 
+  function editTeam(){
+
+  if(!window.isAdmin){
+    alert("관리자만 가능");
+    return;
+  }
+
+  const teamNames =
+    Object.keys(window.teams);
+
+  if(teamNames.length === 0){
+    alert("팀 없음");
+    return;
+  }
+
+  const team =
+    prompt(
+      "수정할 팀 이름\n\n" +
+      teamNames.join(", ")
+    );
+
+  if(!team) return;
+
+  if(!window.teams[team]){
+    alert("없는 팀");
+    return;
+  }
+
+  const action =
+    prompt("삭제 = delete\n이름추가 = add");
+
+  if(action === "delete"){
+
+    delete window.teams[team];
+
+  }else if(action === "add"){
+
+    const name =
+      prompt("추가할 이름");
+
+    if(!name) return;
+
+    let members = window.teams[team];
+
+    if(typeof members === "string"){
+
+      members = members
+        .split(",")
+        .map(x => x.trim())
+        .filter(x => x);
+    }
+
+    if(!members.includes(name)){
+      members.push(name);
+    }
+
+    window.teams[team] = members;
+
+  }else{
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler((res)=>{
+
+      window.teams = res || {};
+
+      renderTeamButtons();
+
+      alert("팀 수정 완료");
+
+    })
+    .saveTeamsToServer(window.teams);
+}
+
   // =========================
   // 팀 섹션 토글
   // =========================
@@ -177,9 +246,25 @@ function adminLogin() {
 
     window.isAdmin = true;
 
-    const btn = document.getElementById("adminBtn");
-    const logout = document.getElementById("logoutBtn");
-    const teamBtn = document.getElementById("teamToggleBtn");
+    const btn =
+      document.getElementById("adminBtn");
+
+    const logout =
+      document.getElementById("logoutBtn");
+
+    const teamBtn =
+      document.getElementById("teamToggleBtn");
+
+    const saveTeamBtn =
+      document.getElementById("saveTeamBtn");
+
+      const editTeamBtn =
+  document.getElementById("editTeamBtn");
+
+if(editTeamBtn){
+  editTeamBtn.style.display = "inline-block";
+}
+
 
     if (btn) {
       btn.innerText = "관리자모드";
@@ -189,9 +274,13 @@ function adminLogin() {
       logout.style.display = "inline-block";
     }
 
-    // 팀관리 버튼 보이기
     if (teamBtn) {
       teamBtn.style.display = "inline-block";
+    }
+
+    // 🔥 추가
+    if (saveTeamBtn) {
+      saveTeamBtn.style.display = "inline-block";
     }
 
     renderTeamButtons();
@@ -201,14 +290,28 @@ function adminLogin() {
     alert("비밀번호 틀림");
   }
 }
-
 function adminLogout() {
 
   window.isAdmin = false;
 
-  const btn = document.getElementById("adminBtn");
-  const logout = document.getElementById("logoutBtn");
-  const teamBtn = document.getElementById("teamToggleBtn");
+  const btn =
+    document.getElementById("adminBtn");
+
+  const logout =
+    document.getElementById("logoutBtn");
+
+  const teamBtn =
+    document.getElementById("teamToggleBtn");
+
+  const saveTeamBtn =
+    document.getElementById("saveTeamBtn");
+
+    const editTeamBtn =
+  document.getElementById("editTeamBtn");
+
+if(editTeamBtn){
+  editTeamBtn.style.display = "none";
+}
 
   if (btn) {
     btn.innerText = "관리자";
@@ -223,6 +326,11 @@ function adminLogout() {
     teamBtn.style.display = "none";
   }
 
+  // 🔥 추가
+  if (saveTeamBtn) {
+    saveTeamBtn.style.display = "none";
+  }
+
   renderTeamButtons();
 
   alert("관리자 해제됨");
@@ -231,22 +339,59 @@ function adminLogout() {
   // 초기 실행
   // =========================
   document.addEventListener("DOMContentLoaded", () => {
-    renderTeamButtons();
 
-    const box = document.getElementById("teamSection");
+  renderTeamButtons();
 
-    localStorage.setItem("teamVisible", "false");
+  const box =
+    document.getElementById("teamSection");
 
-    box.style.display = "none";
+  const visible =
+    localStorage.getItem("teamVisible");
 
-    // 최초 로드
+  box.style.display =
+    visible === "true"
+      ? "block"
+      : "none";
+
+  // 🔥 관리자 상태 복원
+  if(window.isAdmin){
+
+    const btn =
+      document.getElementById("adminBtn");
+
+    const logout =
+      document.getElementById("logoutBtn");
+
+    const teamBtn =
+      document.getElementById("teamToggleBtn");
+
+    const saveTeamBtn =
+      document.getElementById("saveTeamBtn");
+
+    if(btn){
+      btn.innerText = "관리자모드";
+    }
+
+    if(logout){
+      logout.style.display = "inline-block";
+    }
+
+    if(teamBtn){
+      teamBtn.style.display = "inline-block";
+    }
+
+    if(saveTeamBtn){
+      saveTeamBtn.style.display = "inline-block";
+    }
+  }
+
+  loadTeams();
+  loadNames();
+
+  setInterval(() => {
     loadTeams();
     loadNames();
+  }, 3000);
 
-    // 3초마다 자동 동기화
-    setInterval(() => {
-      loadTeams();
-      loadNames();
-    }, 3000);
-  });
+});
 </script>

@@ -2,8 +2,10 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <?!= include('style1'); ?>
 <?!= include('style2'); ?>
+
 </head>
 
 <body>
@@ -13,15 +15,27 @@
 </div>
 
 <div class="top-menu">
-  <button id="formBtn" class="top-btn active" onclick="showForm()">
+
+  <button
+    id="formBtn"
+    class="top-btn active"
+    onclick="showForm()"
+  >
     주문하기
   </button>
 
-  <button id="listBtn" class="top-btn" onclick="showList()">
+  <button
+    id="listBtn"
+    class="top-btn"
+    onclick="showList()"
+  >
     주문목록
   </button>
 
-  <button id="adminBtn" onclick="adminLogin()">
+  <button
+    id="adminBtn"
+    onclick="adminLogin()"
+  >
     관리자
   </button>
 
@@ -32,6 +46,7 @@
   >
     로그아웃
   </button>
+
 </div>
 
 <div id="formPage">
@@ -77,25 +92,45 @@
          팀 관리
     ========================== -->
 
-    <button
-      id="teamToggleBtn"
-      onclick="toggleTeam()"
-      style="display:none;"
-    >
-      팀 관리 열기/닫기
-    </button>
+    <div style="
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    ">
+
+      <button
+        id="teamToggleBtn"
+        onclick="toggleTeam()"
+        style="display:none;"
+      >
+        팀 관리 열기/닫기
+      </button>
+
+      <button
+        id="saveTeamBtn"
+        onclick="saveTeam()"
+        style="display:none;"
+      >
+        팀 저장
+      </button>
+
+      <button
+  id="editTeamBtn"
+  onclick="editTeam()"
+  style="display:none;"
+>
+  팀 수정
+</button>
+
+    </div>
 
     <div id="teamSection">
 
       <h4>👥 팀 선택</h4>
 
       <div id="teamButtons"></div>
-
-      <h3>팀 관리</h3>
-
-      <button onclick="saveTeam()">
-        팀 저장
-      </button>
 
     </div>
 
@@ -130,16 +165,20 @@
 
     </div>
 
-    <!-- 🔥 안내문 분리 -->
+    <!-- 안내문 -->
+
     <div class="info-text">
 
       &lt;본인의 이름 버튼을 선택한 후 메뉴를 선택해주세요.&gt;<br>
+
       &lt;메뉴 선택 후 주문하기 버튼을 눌러주세요.&gt;<br>
+
       &lt;버튼이 없는 메뉴는 직접 입력 후 주문해주세요.&gt;
 
     </div>
 
     <!-- 메뉴 버튼 -->
+
     <div id="menuSection"></div>
 
     <!-- =========================
@@ -233,12 +272,15 @@
 ========================== -->
 
 <div id="listPage" style="display:none;">
+
   <div id="list"></div>
+
 </div>
 
 <!-- =========================
-     메뉴 스크립트
+     스크립트
 ========================== -->
+
 <?!= include('app1'); ?>
 <?!= include('app2'); ?>
 <?!= include('app3'); ?>
