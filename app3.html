@@ -219,6 +219,23 @@ function updateCloseUI(isClosed){
     saveBtn.innerText = "주문하기";
   }
 }
+
+function refreshOrderClosed(){
+
+  google.script.run
+
+    .withSuccessHandler((state)=>{
+
+      isOrderClosed = state;
+
+      updateSaveButton();
+    })
+
+    .getOrderClosed();
+}
+
+
+
 function loadCloseState(){
   google.script.run.withSuccessHandler(state=>{
     updateCloseUI(state);

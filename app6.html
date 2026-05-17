@@ -166,13 +166,8 @@ function renderTeamButtons(){
           )
         );
 
-        window.selectedNames = [
-
-          ...new Set([
-            ...window.selectedNames,
-            ...members
-          ])
-        ];
+      // 팀원 선택 초기화
+window.selectedNames = [];
 
         renderNameButtons();
 
