@@ -12,18 +12,18 @@ function drawTable(data){
   let html = `
   <div class="table-wrap">
 
-  <table>
-  <tr>
-    <th>선택</th>
-    <th>시간</th>
-    <th>이름</th>
-    <th>메뉴</th>
-    <th>HOT/ICE</th>
-    <th>사이즈</th>
-    <th>옵션</th>
-    <th>요청</th>
-  </tr>`;
-
+<table>
+<tr>
+  <th>선택</th>
+  <th>팀</th>
+  <th>시간</th>
+  <th>이름</th>
+  <th>메뉴</th>
+  <th>HOT/ICE</th>
+  <th>사이즈</th>
+  <th>옵션</th>
+  <th>요청</th>
+</tr>`;
   data.slice().reverse().forEach(row=>{
 
     const idx = row[row.length-1];
@@ -38,9 +38,9 @@ function drawTable(data){
         value="${idx}">
     </td>`;
 
-    for(let i=0;i<row.length-1;i++){
-      html += `<td>${row[i]}</td>`;
-    }
+for(let i=0;i<row.length-1;i++){
+  html += `<td>${row[i] || ""}</td>`;
+}
 
     html += "</tr>";
   });
@@ -230,7 +230,7 @@ function copyOrder(){
       }
     })
 
-    .getOrderText();
+  .getOrderText(DEFAULT_TEAM);
 }
 
 // =========================

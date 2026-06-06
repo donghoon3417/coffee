@@ -13,16 +13,17 @@ function adminLogin(){
 
     .withSuccessHandler((result)=>{
 
-      if(result){
+   if(result){
 
-        window.appState.isAdmin = true;
+  window.appState.isAdmin = true;
+  window.isAdmin = true;
 
-        sessionStorage.setItem(
-          "isAdmin",
-          "true"
-        );
+  sessionStorage.setItem(
+    "isAdmin",
+    "true"
+  );
 
-        applyAdminUI();
+  applyAdminUI();
 
         alert("관리자 로그인 완료");
 
@@ -40,7 +41,8 @@ function adminLogin(){
 // =========================
 function adminLogout(){
 
-  window.appState.isAdmin = false;
+window.appState.isAdmin = false;
+window.isAdmin = false;
 
   sessionStorage.removeItem("isAdmin");
 
@@ -57,8 +59,17 @@ function applyAdminUI(){
   const ids = [
     "logoutBtn",
     "saveTeamBtn",
-    "editTeamBtn"
+    "editTeamBtn",
+      "teamToggleBtn"
+
   ];
+
+const teamButtons =
+  document.getElementById("teamButtons");
+
+if(teamButtons){
+  teamButtons.style.display = "block";
+}
 
   const btn =
     document.getElementById("adminBtn");
@@ -84,12 +95,18 @@ function applyAdminUI(){
 // =========================
 function removeAdminUI(){
 
-  const ids = [
-    "logoutBtn",
-    "saveTeamBtn",
-    "editTeamBtn"
-  ];
+const ids = [
+  "logoutBtn",
+  "saveTeamBtn",
+  "editTeamBtn",
+  "teamToggleBtn"
+];
+const teamButtons =
+  document.getElementById("teamButtons");
 
+if(teamButtons){
+  teamButtons.style.display = "none";
+}
   const btn =
     document.getElementById("adminBtn");
 

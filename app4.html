@@ -3,12 +3,13 @@ window.appState = window.appState || {
   nameList: [],
   selectedNames: [],
   hiddenNames: JSON.parse(
-    sessionStorage.getItem("hiddenNames") || "[]"
+    sessionStorage.getItem(
+      "hiddenNames_" + DEFAULT_TEAM
+    ) || "[]"
   ),
   isAdmin:
     sessionStorage.getItem("isAdmin") === "true"
 };
-
 // =========================
 // 상태 별칭
 // =========================
@@ -125,10 +126,10 @@ function renderNameButtons(){
           n => n !== name
         );
 
-      sessionStorage.setItem(
-        "hiddenNames",
-        JSON.stringify(window.hiddenNames)
-      );
+sessionStorage.setItem(
+  "hiddenNames_" + DEFAULT_TEAM,
+  JSON.stringify(window.hiddenNames)
+);
 
       renderNameButtons();
 
@@ -223,11 +224,10 @@ function addName(){
           n => n !== name
         );
 
-      sessionStorage.setItem(
-        "hiddenNames",
-        JSON.stringify(window.hiddenNames)
-      );
-
+sessionStorage.setItem(
+  "hiddenNames_" + DEFAULT_TEAM,
+  JSON.stringify(window.hiddenNames)
+);
       renderNameButtons();
 
       alert("숨김 해제됨");
@@ -264,7 +264,10 @@ function addName(){
       input.value = "";
     })
 
-    .saveNamesToServer(newList);
+.saveNamesToServer(
+  DEFAULT_TEAM,
+  newList
+);
 }
 
 // =========================
@@ -303,8 +306,10 @@ function deleteAllNames(){
 
       alert("전체 삭제 완료");
     })
-
-    .saveNamesToServer([]);
+.saveNamesToServer(
+  DEFAULT_TEAM,
+  []
+);
 }
 
 // =========================

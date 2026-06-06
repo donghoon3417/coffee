@@ -1,7 +1,14 @@
 const SHEET_NAME = "커피주문";
 
-function doGet() {
-  return HtmlService.createTemplateFromFile("index").evaluate();
+function doGet(e) {
+
+  const t =
+    HtmlService.createTemplateFromFile("index");
+
+  t.defaultTeam =
+    e.parameter.team || "";
+
+  return t.evaluate();
 }
 
 function include(filename) {
@@ -17,31 +24,50 @@ function saveOrder(data) {
 
   // 🔥 여기서 변경
   data.names.forEach(name => {
-    sheet.appendRow([
-      time,
-      name,
-      data.menu,
-      data.temp,
-      data.size,
-      data.option,
-      data.note
-    ]);
+   sheet.appendRow([
+  data.team,
+  time,
+  name,
+  data.menu,
+  data.temp,
+  data.size,
+  data.option,
+  data.note
+]);
   });
 }
 
 // 🔥 전체 데이터 + 집계 한번에
-function getAllData() {
+function getAllData(team) {
 
-  return {
-    orders: getOrders(),
-    summary: getSummary()
+  Logger.log(team);
+
+  const result = {
+    orders: getOrders(team),
+    summary: getSummary(team)
   };
+
+  Logger.log(JSON.stringify(result));
+
+  return result;
 }
 
 // 전체 조회
-function getOrders() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  return sheet.getDataRange().getDisplayValues().map((r, i) => [...r, i]);
+function getOrders(team){
+
+  const data =
+    SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME)
+      .getDataRange()
+      .getDisplayValues();
+
+  return data
+    .filter((r,i) =>
+      i === 0 ||
+      !team ||
+      String(r[0]).trim() === String(team).trim()
+    )
+    .map((r,i)=>[...r,i]);
 }
 
 // 삭제
@@ -72,27 +98,45 @@ function deleteMultiple(indexes) {
 }
 
 // 주문 마감
-function setOrderClosed(state) {
-  const prop = PropertiesService.getScriptProperties();
-  prop.setProperty("ORDER_CLOSED", state ? "true" : "false");
+function setOrderClosed(team, state) {
+
+  const prop =
+    PropertiesService.getScriptProperties();
+
+  prop.setProperty(
+    "ORDER_CLOSED_" + team,
+    state ? "true" : "false"
+  );
 }
 
-function getOrderClosed() {
-  const prop = PropertiesService.getScriptProperties();
-  return prop.getProperty("ORDER_CLOSED") === "true";
+function getOrderClosed(team) {
+
+  const prop =
+    PropertiesService.getScriptProperties();
+
+  return prop.getProperty(
+    "ORDER_CLOSED_" + team
+  ) === "true";
 }
 
 // 카톡 텍스트
-function getOrderText() {
+function getOrderText(team) {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues().slice(1);
+const data =
+  sheet.getDataRange()
+    .getValues()
+    .slice(1)
+    .filter(r =>
+      !team ||
+      String(r[0]).trim() === String(team).trim()
+    );
 
   const result = {};
 
   data.forEach(r => {
     const key = `${r[3]} ${r[2]} ${r[4]}`;
-    const name = r[1];
+const name = r[2];
 
     if (!result[key]) result[key] = [];
     result[key].push(name);
@@ -128,17 +172,24 @@ function checkAdmin(password) {
 }
 
 // 집계
-function getSummary() {
+function getSummary(team) {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues().slice(1);
+const data =
+  sheet.getDataRange()
+    .getValues()
+    .slice(1)
+    .filter(r =>
+      !team ||
+      String(r[0]).trim() === String(team).trim()
+    );
 
   const result = {};
 
   data.forEach(r => {
 
     const key = `${r[3]} ${r[2]} ${r[4]}`;
-    const name = r[1];
+ const name = r[2];
 
     if (!result[key]) {
       result[key] = { count: 0, names: [] };
@@ -165,26 +216,25 @@ function getTeamsFromServer() {
 // =========================
 // 이름 저장
 // =========================
-function saveNamesToServer(names) {
+function saveNamesToServer(team, names) {
 
   const prop = PropertiesService.getScriptProperties();
 
   prop.setProperty(
-    "NAME_LIST",
+    "NAME_LIST_" + team,
     JSON.stringify(names)
   );
 
   return names;
 }
 
-// =========================
-// 이름 불러오기
-// =========================
-function getNamesFromServer() {
+function getNamesFromServer(team) {
 
   const prop = PropertiesService.getScriptProperties();
 
   return JSON.parse(
-    prop.getProperty("NAME_LIST") || "[]"
+    prop.getProperty(
+      "NAME_LIST_" + team
+    ) || "[]"
   );
 }

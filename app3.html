@@ -16,20 +16,20 @@ function showForm(){
   const box =
     document.getElementById("teamSection");
 
-  if(box){
+if(box){
 
-    if(!localStorage.getItem("teamVisible")){
+  if(!window.appState?.isAdmin){
 
-      box.style.display = "none";
+    box.style.display = "none";
 
-    }else{
+  }else{
 
-      box.style.display =
-        localStorage.getItem("teamVisible") === "true"
-          ? "block"
-          : "none";
-    }
+    box.style.display =
+      localStorage.getItem("teamVisible") === "true"
+        ? "block"
+        : "none";
   }
+}
 
   // 🔥 주문 마감 상태 다시 불러오기
   loadCloseState();
@@ -81,7 +81,7 @@ function loadList(){
 
     })
 
-    .getAllData();
+.getAllData(DEFAULT_TEAM);
 }
 
 // =========================
@@ -145,22 +145,24 @@ function save(){
     return;
   }
 
-  const data = {
+const data = {
 
-    names: names,
+  team: DEFAULT_TEAM,
 
-    menu: finalMenu,
+  names: names,
 
-    temp: selectedTemp,
+  menu: finalMenu,
 
-    size: selectedSize,
+  temp: selectedTemp,
 
-    option:
-      document.getElementById("option").value,
+  size: selectedSize,
 
-    note:
-      document.getElementById("note").value
-  };
+  option:
+    document.getElementById("option").value,
+
+  note:
+    document.getElementById("note").value
+};
 
   google.script.run
 
@@ -215,7 +217,10 @@ function toggleOrderClose(){
         updateCloseUI(true);
       })
 
-      .setOrderClosed(true);
+  .setOrderClosed(
+  DEFAULT_TEAM,
+  true
+);
 
   }else{
 
@@ -231,7 +236,10 @@ function toggleOrderClose(){
         updateCloseUI(false);
       })
 
-      .setOrderClosed(false);
+  .setOrderClosed(
+  DEFAULT_TEAM,
+  false
+);
   }
 }
 
@@ -303,7 +311,7 @@ function refreshOrderClosed(){
       updateCloseUI(state);
     })
 
-    .getOrderClosed();
+  .getOrderClosed(DEFAULT_TEAM);
 }
 
 // =========================
@@ -344,7 +352,7 @@ function loadCloseState(){
 
     })
 
-    .getOrderClosed();
+.getOrderClosed(DEFAULT_TEAM);
 }
 
 // =========================

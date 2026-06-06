@@ -17,12 +17,32 @@ function loadTeams(){
       const after =
         JSON.stringify(res || {});
 
-      if(before !== after){
+if(before !== after){
 
-        window.teams = res || {};
+  window.teams = res || {};
 
-        renderTeamButtons();
+  renderTeamButtons();
+
+  if(
+    DEFAULT_TEAM &&
+    window.teams[DEFAULT_TEAM]
+  ){
+
+    const btns =
+      document.querySelectorAll(
+        "#teamButtons button"
+      );
+
+    btns.forEach(btn => {
+
+      if(btn.innerText === DEFAULT_TEAM){
+
+        btn.click();
       }
+
+    });
+  }
+}
     })
 
     .getTeamsFromServer();
@@ -50,7 +70,7 @@ function loadNames(){
       renderNameButtons();
     })
 
-    .getNamesFromServer();
+.getNamesFromServer(DEFAULT_TEAM);
 }
 
 // =========================
@@ -58,7 +78,7 @@ function loadNames(){
 // =========================
 function saveTeam(){
 
-  if(!window.isAdmin){
+if(!window.appState.isAdmin){
     alert("관리자만 가능");
     return;
   }
@@ -159,12 +179,12 @@ function renderTeamButtons(){
             );
         });
 
-        sessionStorage.setItem(
-          "hiddenNames",
-          JSON.stringify(
-            window.hiddenNames
-          )
-        );
+ sessionStorage.setItem(
+  "hiddenNames_" + DEFAULT_TEAM,
+  JSON.stringify(
+    window.hiddenNames
+  )
+);
 
       // 팀원 선택 초기화
 window.selectedNames = [];
@@ -192,7 +212,7 @@ window.selectedNames = [];
       del.style.marginLeft =
         "3px";
 
-      if(!window.isAdmin){
+    if(!window.appState.isAdmin){
         del.style.display = "none";
       }
 
@@ -229,7 +249,7 @@ window.selectedNames = [];
 // =========================
 function editTeam(){
 
-  if(!window.isAdmin){
+if(!window.appState.isAdmin){
 
     alert("관리자만 가능");
     return;
@@ -318,6 +338,9 @@ function editTeam(){
 // =========================
 function toggleTeam(){
 
+  if(!window.appState.isAdmin){
+    return;
+  }
   const el =
     document.getElementById(
       "teamSection"
