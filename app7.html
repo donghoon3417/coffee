@@ -1,11 +1,18 @@
 <script>
-
 function uploadMenuImage(){
+
+  document.getElementById(
+    "uploadLoading"
+  ).style.display = "flex";
 
   const files =
     document.getElementById("menuFile").files;
 
   if(!files.length){
+
+    document.getElementById(
+      "uploadLoading"
+    ).style.display = "none";
 
     alert("사진을 선택하세요.");
 
@@ -27,23 +34,45 @@ function uploadMenuImage(){
 
           completed++;
 
-          if(
-            completed === files.length
-          ){
+          if(completed === files.length){
+
+            document.getElementById(
+              "uploadLoading"
+            ).style.display = "none";
 
             alert(
               files.length +
-              "개 메뉴판 저장 완료"
+              "개 메뉴판 등록이 완료되었습니다."
             );
 
+            document.getElementById(
+              "menuFile"
+            ).value = "";
+
             loadMenuThumbnail();
+
+            previewMenuImage();
           }
 
         })
-.saveMenuImage(
-  DEFAULT_TEAM,
-  e.target.result
-);
+
+        .withFailureHandler(err=>{
+
+          document.getElementById(
+            "uploadLoading"
+          ).style.display = "none";
+
+          console.error(err);
+
+          alert(err.message);
+
+        })
+
+        .saveMenuImage(
+          DEFAULT_TEAM,
+          e.target.result,
+          file.name
+        );
     };
 
     reader.readAsDataURL(file);
@@ -75,42 +104,111 @@ function previewMenuImage(){
           "menuPreviewContainer"
         );
 
-      box.innerHTML = "";
+      let current = 0;
 
-      imgs.forEach(item=>{
+      function renderImage(){
 
-        box.innerHTML += `
+        const item = imgs[current];
+
+        box.innerHTML = `
           <div
             style="
-              margin-bottom:20px;
+              text-align:center;
+              height:100%;
             "
           >
 
             <img
               src="${item.url}"
               style="
-                width:100%;
+                max-width:95%;
+                max-height:75vh;
+                object-fit:contain;
                 border-radius:10px;
               "
             >
 
-            <button
-              onclick="
-                deleteMenuImageClient(
-                  '${item.id}'
-                )
-              "
+            <div
               style="
-                width:100%;
-                margin-top:8px;
+                margin-top:15px;
               "
             >
-              삭제
-            </button>
+
+              <button
+                onclick="
+                  window.prevMenuImage()
+                "
+              >
+                ◀ 이전
+              </button>
+
+              <span
+                style="
+                  margin:0 15px;
+                  color:white;
+                  font-size:18px;
+                "
+              >
+                ${current + 1}
+                /
+                ${imgs.length}
+              </span>
+
+              <button
+                onclick="
+                  window.nextMenuImage()
+                "
+              >
+                다음 ▶
+              </button>
+
+            </div>
+
+            <div
+              style="
+                margin-top:15px;
+              "
+            >
+
+              <button
+                onclick="
+                  deleteMenuImageClient(
+                    '${item.id}'
+                  )
+                "
+              >
+                삭제
+              </button>
+
+            </div>
 
           </div>
         `;
-      });
+      }
+
+      window.prevMenuImage = function(){
+
+        current--;
+
+        if(current < 0){
+          current = imgs.length - 1;
+        }
+
+        renderImage();
+      };
+
+      window.nextMenuImage = function(){
+
+        current++;
+
+        if(current >= imgs.length){
+          current = 0;
+        }
+
+        renderImage();
+      };
+
+      renderImage();
 
       document.getElementById(
         "menuModal"
@@ -137,13 +235,15 @@ function deleteMenuImageClient(
 
   google.script.run
 
-    .withSuccessHandler(()=>{
+.withSuccessHandler(()=>{
 
-      previewMenuImage();
+  alert("메뉴판이 삭제되었습니다.");
 
-      loadMenuThumbnail();
+  previewMenuImage();
 
-    })
+  loadMenuThumbnail();
+
+})
 
     .deleteMenuImage(
       DEFAULT_TEAM,
@@ -163,7 +263,8 @@ function loadMenuThumbnail(){
   google.script.run
 
     .withSuccessHandler(imgs=>{
-
+  console.log("썸네일 개수:", imgs.length);
+  console.log(imgs);
       const box =
         document.getElementById(
           "menuThumbArea"
@@ -181,29 +282,43 @@ function loadMenuThumbnail(){
         return;
       }
 
-      box.innerHTML = `
-        <img
-          src="${imgs[0].url}"
-          onclick="previewMenuImage()"
-          style="
-            width:150px;
-            max-height:150px;
-            object-fit:cover;
-            border-radius:10px;
-            cursor:pointer;
-            border:1px solid #ddd;
-          "
-        >
+   let html = `
+  <div style="
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+  ">
+`;
 
-        <div
-          style="
-            margin-top:5px;
-          "
-        >
-          메뉴판 미리보기
-          (${imgs.length}장)
-        </div>
-      `;
+imgs.slice(-3).forEach(item => {
+
+  html += `
+    <img
+      src="${item.url}"
+      onclick="previewMenuImage()"
+      style="
+        width:120px;
+        height:120px;
+        object-fit:cover;
+        border-radius:10px;
+        cursor:pointer;
+        border:1px solid #ddd;
+      "
+    >
+  `;
+
+});
+
+html += `
+  </div>
+
+  <div style="margin-top:5px;">
+    메뉴판 미리보기 (${imgs.length}장)
+  </div>
+`;
+
+box.innerHTML = html;
     })
 
     .getMenuImages(

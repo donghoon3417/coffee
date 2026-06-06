@@ -25,16 +25,16 @@ function saveOrder(data) {
 
   // 🔥 여기서 변경
   data.names.forEach(name => {
-   sheet.appendRow([
-  data.team,
-  time,
-  name,
-  data.menu,
-  data.temp,
-  data.size,
-  data.option,
-  data.note
-]);
+    sheet.appendRow([
+      data.team,
+      time,
+      name,
+      data.menu,
+      data.temp,
+      data.size,
+      data.option,
+      data.note
+    ]);
   });
 }
 
@@ -54,7 +54,7 @@ function getAllData(team) {
 }
 
 // 전체 조회
-function getOrders(team){
+function getOrders(team) {
 
   const data =
     SpreadsheetApp.getActiveSpreadsheet()
@@ -63,12 +63,12 @@ function getOrders(team){
       .getDisplayValues();
 
   return data
-    .filter((r,i) =>
+    .filter((r, i) =>
       i === 0 ||
       !team ||
       String(r[0]).trim() === String(team).trim()
     )
-    .map((r,i)=>[...r,i]);
+    .map((r, i) => [...r, i]);
 }
 
 // 삭제
@@ -92,7 +92,7 @@ function deleteMultiple(indexes) {
       // 헤더 제외 +1
       const rowNumber = i + 1;
 
-      if(rowNumber > 1){
+      if (rowNumber > 1) {
         sheet.deleteRow(rowNumber);
       }
     });
@@ -124,20 +124,20 @@ function getOrderClosed(team) {
 function getOrderText(team) {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-const data =
-  sheet.getDataRange()
-    .getValues()
-    .slice(1)
-    .filter(r =>
-      !team ||
-      String(r[0]).trim() === String(team).trim()
-    );
+  const data =
+    sheet.getDataRange()
+      .getValues()
+      .slice(1)
+      .filter(r =>
+        !team ||
+        String(r[0]).trim() === String(team).trim()
+      );
 
   const result = {};
 
   data.forEach(r => {
     const key = `${r[3]} ${r[2]} ${r[4]}`;
-const name = r[2];
+    const name = r[2];
 
     if (!result[key]) result[key] = [];
     result[key].push(name);
@@ -176,21 +176,21 @@ function checkAdmin(password) {
 function getSummary(team) {
 
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-const data =
-  sheet.getDataRange()
-    .getValues()
-    .slice(1)
-    .filter(r =>
-      !team ||
-      String(r[0]).trim() === String(team).trim()
-    );
+  const data =
+    sheet.getDataRange()
+      .getValues()
+      .slice(1)
+      .filter(r =>
+        !team ||
+        String(r[0]).trim() === String(team).trim()
+      );
 
   const result = {};
 
   data.forEach(r => {
 
     const key = `${r[3]} ${r[2]} ${r[4]}`;
- const name = r[2];
+    const name = r[2];
 
     if (!result[key]) {
       result[key] = { count: 0, names: [] };
@@ -238,43 +238,49 @@ function getNamesFromServer(team) {
       "NAME_LIST_" + team
     ) || "[]"
   );
-}
-
-function saveMenuImage(
+} function saveMenuImage(
   team,
   imageData,
   fileName
-){
+) {
+
+  Logger.log("파일명: " + fileName);
+  Logger.log("데이터길이: " + imageData.length);
 
   const folder =
     DriveApp.getFolderById(
       MENU_FOLDER_ID
     );
 
+  Logger.log("1");
+
   const bytes =
     Utilities.base64Decode(
       imageData.split(",")[1]
     );
+
+  Logger.log("2");
 
   const mime =
     imageData.match(
       /^data:(.*?);base64/
     )[1];
 
+  Logger.log("3");
+
   const blob =
     Utilities.newBlob(
       bytes,
       mime,
-      fileName
+      fileName || "image.jpg"
     );
+
+  Logger.log("4");
 
   const file =
     folder.createFile(blob);
 
-  file.setSharing(
-    DriveApp.Access.ANYONE_WITH_LINK,
-    DriveApp.Permission.VIEW
-  );
+  Logger.log("5");
 
   const props =
     PropertiesService.getScriptProperties();
@@ -296,10 +302,11 @@ function saveMenuImage(
     JSON.stringify(list)
   );
 
+  Logger.log("6");
+
   return true;
 }
-
-function getMenuImages(team){
+function getMenuImages(team) {
 
   const props =
     PropertiesService.getScriptProperties();
@@ -317,8 +324,9 @@ function getMenuImages(team){
     name: item.name,
 
     url:
-      "https://drive.google.com/uc?export=view&id="
-      + item.id
+      "https://drive.google.com/thumbnail?id="
+      + item.id +
+      "&sz=w1000"
 
   }));
 }
@@ -326,15 +334,15 @@ function getMenuImages(team){
 function deleteMenuImage(
   team,
   fileId
-){
+) {
 
-  try{
+  try {
 
     DriveApp
       .getFileById(fileId)
       .setTrashed(true);
 
-  }catch(err){}
+  } catch (err) { }
 
   const props =
     PropertiesService.getScriptProperties();
@@ -357,4 +365,15 @@ function deleteMenuImage(
   );
 
   return true;
+}
+
+function clearHallMenuImages() {
+
+  const props =
+    PropertiesService.getScriptProperties();
+
+  props.deleteProperty(
+    "MENU_IMAGE_hall"
+  );
+
 }

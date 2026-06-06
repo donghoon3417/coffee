@@ -61,22 +61,23 @@
 
     <div id="nameButtons"></div>
 
-    <div style="
-      display:flex;
-      gap:6px;
-      align-items:center;
-      margin-bottom:8px;
-    ">
+<div style="
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  align-items:center;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+">
 
-      <input
-        id="newName"
-        placeholder="이름 등록"
-        style="
-          flex:1;
-          margin:0;
-          max-width:none;
-        "
-      >
+<input
+  id="newName"
+  placeholder="이름 등록"
+  style="
+    width:120px;
+    margin:0;
+  "
+>
 
       <button onclick="addName()">
         이름등록
@@ -125,15 +126,68 @@
 
     </div>
 
-    <div id="teamSection">
+    <div id="teamSection" style="display:none;">
 
       <h4>👥 팀 선택</h4>
 
-      <div id="teamButtons"></div>
+      <div id="teamButtons" style="display:none;"></div>
 
     </div>
 
-    <!-- =========================
+<hr
+  style="
+    margin:15px 0;
+    border:none;
+    border-top:1px solid #ddd;
+  "
+>
+
+<div style="
+  text-align:center;
+  margin:10px 0;
+">
+
+<input
+  type="file"
+  id="menuFile"
+  accept="image/*"
+  multiple
+  style="display:none;"
+  onchange="uploadMenuImage()"
+>
+
+<button onclick="document.getElementById('menuFile').click()">
+  메뉴판 등록
+</button>
+
+<button onclick="previewMenuImage()">
+  메뉴판 보기
+</button>
+
+<div
+  id="menuThumbArea"
+  style="
+    margin-top:10px;
+    text-align:center;
+  "
+></div>
+
+</div>
+
+        <!-- 안내문 -->
+
+    <div class="info-text">
+
+      &lt;본인의 이름 버튼을 선택한 후 메뉴를 선택해주세요.&gt;<br>
+
+      &lt;메뉴 선택 후 주문하기 버튼을 눌러주세요.&gt;<br>
+
+      &lt;버튼이 없는 메뉴는 직접 입력 후 주문해주세요.&gt;
+
+    </div>
+
+
+<!-- =========================
          메뉴
     ========================== -->
 
@@ -142,14 +196,14 @@
     <div id="extraSection">
 
       <button
-        class="caffeine-btn"
+        class="caffeine-btn active"
         onclick="toggleDecaf(this)"
       >
         디카페인
       </button>
 
       <button
-        class="caffeine-btn active"
+        class="caffeine-btn"
         onclick="toggleCaffeine(this)"
       >
         카페인
@@ -163,18 +217,14 @@
       </button>
 
     </div>
+    <hr
+  style="
+    margin:15px 0;
+    border:none;
+    border-top:1px solid #ddd;
+  "
+>
 
-    <!-- 안내문 -->
-
-    <div class="info-text">
-
-      &lt;본인의 이름 버튼을 선택한 후 메뉴를 선택해주세요.&gt;<br>
-
-      &lt;메뉴 선택 후 주문하기 버튼을 눌러주세요.&gt;<br>
-
-      &lt;버튼이 없는 메뉴는 직접 입력 후 주문해주세요.&gt;
-
-    </div>
 
     <!-- 메뉴 버튼 -->
 
@@ -276,8 +326,14 @@
 
 </div>
 
+<script>
+window.DEFAULT_TEAM = "<?= defaultTeam ?>";
+
+console.log("TEAM=", window.DEFAULT_TEAM);
+</script>
 <!-- =========================
      스크립트
+     
 ========================== -->
 
 <?!= include('app1'); ?>
@@ -286,6 +342,68 @@
 <?!= include('app4'); ?>
 <?!= include('app5'); ?>
 <?!= include('app6'); ?>
+<?!= include('app7'); ?>
+
+<div
+  id="menuModal"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    z-index:99999;
+  "
+>
+
+  <span
+    onclick="closeMenuModal()"
+    style="
+      position:absolute;
+      top:10px;
+      right:20px;
+      color:#fff;
+      font-size:40px;
+      cursor:pointer;
+    "
+  >
+    ×
+  </span>
+
+  <div
+    id="menuPreviewContainer"
+    style="
+      height:100%;
+      overflow:auto;
+      padding:20px;
+    "
+  ></div>
+
+</div>
+
+<div
+  id="uploadLoading"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:999999;
+    justify-content:center;
+    align-items:center;
+  "
+>
+  <div
+    style="
+      background:#fff;
+      padding:20px 30px;
+      border-radius:12px;
+      font-size:18px;
+      font-weight:bold;
+    "
+  >
+    메뉴판 등록중...
+  </div>
+</div>
 
 </body>
 </html>
