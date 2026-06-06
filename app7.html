@@ -1,0 +1,223 @@
+<script>
+
+function uploadMenuImage(){
+
+  const files =
+    document.getElementById("menuFile").files;
+
+  if(!files.length){
+
+    alert("사진을 선택하세요.");
+
+    return;
+  }
+
+  let completed = 0;
+
+  Array.from(files).forEach(file => {
+
+    const reader =
+      new FileReader();
+
+    reader.onload = function(e){
+
+      google.script.run
+
+        .withSuccessHandler(()=>{
+
+          completed++;
+
+          if(
+            completed === files.length
+          ){
+
+            alert(
+              files.length +
+              "개 메뉴판 저장 완료"
+            );
+
+            loadMenuThumbnail();
+          }
+
+        })
+.saveMenuImage(
+  DEFAULT_TEAM,
+  e.target.result
+);
+    };
+
+    reader.readAsDataURL(file);
+
+  });
+
+}
+
+function previewMenuImage(){
+
+  google.script.run
+
+    .withSuccessHandler(imgs=>{
+
+      if(
+        !imgs ||
+        imgs.length === 0
+      ){
+
+        alert(
+          "등록된 메뉴판이 없습니다."
+        );
+
+        return;
+      }
+
+      const box =
+        document.getElementById(
+          "menuPreviewContainer"
+        );
+
+      box.innerHTML = "";
+
+      imgs.forEach(item=>{
+
+        box.innerHTML += `
+          <div
+            style="
+              margin-bottom:20px;
+            "
+          >
+
+            <img
+              src="${item.url}"
+              style="
+                width:100%;
+                border-radius:10px;
+              "
+            >
+
+            <button
+              onclick="
+                deleteMenuImageClient(
+                  '${item.id}'
+                )
+              "
+              style="
+                width:100%;
+                margin-top:8px;
+              "
+            >
+              삭제
+            </button>
+
+          </div>
+        `;
+      });
+
+      document.getElementById(
+        "menuModal"
+      ).style.display = "block";
+
+    })
+
+    .getMenuImages(
+      DEFAULT_TEAM
+    );
+}
+
+function deleteMenuImageClient(
+  fileId
+){
+
+  if(
+    !confirm(
+      "이 메뉴판을 삭제할까요?"
+    )
+  ){
+    return;
+  }
+
+  google.script.run
+
+    .withSuccessHandler(()=>{
+
+      previewMenuImage();
+
+      loadMenuThumbnail();
+
+    })
+
+    .deleteMenuImage(
+      DEFAULT_TEAM,
+      fileId
+    );
+}
+
+function closeMenuModal(){
+
+  document.getElementById(
+    "menuModal"
+  ).style.display = "none";
+}
+
+function loadMenuThumbnail(){
+
+  google.script.run
+
+    .withSuccessHandler(imgs=>{
+
+      const box =
+        document.getElementById(
+          "menuThumbArea"
+        );
+
+      if(!box) return;
+
+      if(
+        !imgs ||
+        imgs.length === 0
+      ){
+
+        box.innerHTML = "";
+
+        return;
+      }
+
+      box.innerHTML = `
+        <img
+          src="${imgs[0].url}"
+          onclick="previewMenuImage()"
+          style="
+            width:150px;
+            max-height:150px;
+            object-fit:cover;
+            border-radius:10px;
+            cursor:pointer;
+            border:1px solid #ddd;
+          "
+        >
+
+        <div
+          style="
+            margin-top:5px;
+          "
+        >
+          메뉴판 미리보기
+          (${imgs.length}장)
+        </div>
+      `;
+    })
+
+    .getMenuImages(
+      DEFAULT_TEAM
+    );
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  ()=>{
+
+    loadMenuThumbnail();
+
+  }
+);
+
+</script>

@@ -1,5 +1,6 @@
 const SHEET_NAME = "커피주문";
-
+const MENU_FOLDER_ID =
+  "1bptCsJreA_saTjituhJ2OqgtHuP5fh6T";
 function doGet(e) {
 
   const t =
@@ -237,4 +238,123 @@ function getNamesFromServer(team) {
       "NAME_LIST_" + team
     ) || "[]"
   );
+}
+
+function saveMenuImage(
+  team,
+  imageData,
+  fileName
+){
+
+  const folder =
+    DriveApp.getFolderById(
+      MENU_FOLDER_ID
+    );
+
+  const bytes =
+    Utilities.base64Decode(
+      imageData.split(",")[1]
+    );
+
+  const mime =
+    imageData.match(
+      /^data:(.*?);base64/
+    )[1];
+
+  const blob =
+    Utilities.newBlob(
+      bytes,
+      mime,
+      fileName
+    );
+
+  const file =
+    folder.createFile(blob);
+
+  file.setSharing(
+    DriveApp.Access.ANYONE_WITH_LINK,
+    DriveApp.Permission.VIEW
+  );
+
+  const props =
+    PropertiesService.getScriptProperties();
+
+  const key =
+    "MENU_IMAGE_" + team;
+
+  const list = JSON.parse(
+    props.getProperty(key) || "[]"
+  );
+
+  list.push({
+    id: file.getId(),
+    name: fileName
+  });
+
+  props.setProperty(
+    key,
+    JSON.stringify(list)
+  );
+
+  return true;
+}
+
+function getMenuImages(team){
+
+  const props =
+    PropertiesService.getScriptProperties();
+
+  const list = JSON.parse(
+    props.getProperty(
+      "MENU_IMAGE_" + team
+    ) || "[]"
+  );
+
+  return list.map(item => ({
+
+    id: item.id,
+
+    name: item.name,
+
+    url:
+      "https://drive.google.com/uc?export=view&id="
+      + item.id
+
+  }));
+}
+
+function deleteMenuImage(
+  team,
+  fileId
+){
+
+  try{
+
+    DriveApp
+      .getFileById(fileId)
+      .setTrashed(true);
+
+  }catch(err){}
+
+  const props =
+    PropertiesService.getScriptProperties();
+
+  const key =
+    "MENU_IMAGE_" + team;
+
+  const list = JSON.parse(
+    props.getProperty(key) || "[]"
+  );
+
+  const newList =
+    list.filter(
+      x => x.id !== fileId
+    );
+
+  props.setProperty(
+    key,
+    JSON.stringify(newList)
+  );
+
+  return true;
 }
