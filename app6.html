@@ -59,15 +59,19 @@ function loadNames(){
 
       const serverNames = res || [];
 
-      window.nameList = [
+ window.nameList = [
+  ...new Set([
+    ...window.nameList,
+    ...serverNames
+  ])
+];
 
-        ...new Set([
-          ...window.nameList,
-          ...serverNames
-        ])
-      ];
+localStorage.setItem(
+  "nameList",
+  JSON.stringify(window.nameList)
+);
 
-      renderNameButtons();
+renderNameButtons();
     })
 
 .getNamesFromServer(DEFAULT_TEAM);

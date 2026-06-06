@@ -10,6 +10,9 @@ window.appState = window.appState || {
   isAdmin:
     sessionStorage.getItem("isAdmin") === "true"
 };
+
+const NAME_STORAGE_KEY =
+  "nameList_" + DEFAULT_TEAM;
 // =========================
 // 상태 별칭
 // =========================
@@ -31,8 +34,9 @@ Object.defineProperties(window, {
 // =========================
 // 초기 데이터 로드
 // =========================
-window.nameList = [];
-localStorage.removeItem("nameList");
+window.nameList = JSON.parse(
+  localStorage.getItem(NAME_STORAGE_KEY) || "[]"
+);
 
 // =========================
 // 이름 버튼 렌더링
@@ -254,11 +258,10 @@ sessionStorage.setItem(
 
       window.nameList = res || newList;
 
-      localStorage.setItem(
-        "nameList",
-        JSON.stringify(window.nameList)
-      );
-
+localStorage.setItem(
+  NAME_STORAGE_KEY,
+  JSON.stringify(window.nameList)
+);
       renderNameButtons();
 
       input.value = "";
@@ -286,11 +289,10 @@ function deleteAllNames(){
   window.nameList = [];
 
   window.selectedNames = [];
-
-  localStorage.setItem(
-    "nameList",
-    JSON.stringify([])
-  );
+localStorage.setItem(
+  NAME_STORAGE_KEY,
+  JSON.stringify([])
+);
 
   google.script.run
 
