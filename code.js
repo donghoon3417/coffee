@@ -367,13 +367,22 @@ function deleteMenuImage(
   return true;
 }
 
-function clearHallMenuImages() {
-
-  const props =
+function debugTeams() {
+  const prop =
     PropertiesService.getScriptProperties();
 
-  props.deleteProperty(
-    "MENU_IMAGE_hall"
+  Logger.log(
+    prop.getProperty("TEAMS")
   );
+}
+function setCurrentTeam(team) {
+  PropertiesService
+    .getScriptProperties()
+    .setProperty("CURRENT_TEAM", team);
+}
 
+function getCurrentTeam() {
+  return PropertiesService
+    .getScriptProperties()
+    .getProperty("CURRENT_TEAM") || "";
 }
