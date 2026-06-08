@@ -1,332 +1,238 @@
 <script>
   console.log("APP4");
-window.appState = window.appState || {
-  nameList: [],
-  selectedNames: [],
-  hiddenNames: JSON.parse(
-    sessionStorage.getItem(
-      "hiddenNames_" + DEFAULT_TEAM
-    ) || "[]"
-  ),
-  isAdmin:
-    sessionStorage.getItem("isAdmin") === "true"
-};
+  window.appState = window.appState || {
+    nameList: [],
+    selectedNames: [],
+    hiddenNames: [],
+    isAdmin: sessionStorage.getItem("isAdmin") === "true",
+  };
 
-const NAME_STORAGE_KEY =
-  "nameList_" + DEFAULT_TEAM;
-// =========================
-// 상태 별칭
-// =========================
-Object.defineProperties(window, {
-  nameList: {
-    get: ()=>window.appState.nameList,
-    set: v=>window.appState.nameList = v
-  },
-  selectedNames: {
-    get: ()=>window.appState.selectedNames,
-    set: v=>window.appState.selectedNames = v
-  },
-  hiddenNames: {
-    get: ()=>window.appState.hiddenNames,
-    set: v=>window.appState.hiddenNames = v
-  }
-});
-
-// =========================
-// 초기 데이터 로드
-// =========================
-window.nameList = JSON.parse(
-  localStorage.getItem(NAME_STORAGE_KEY) || "[]"
-);
-
-// =========================
-// 이름 버튼 렌더링
-// =========================
-function renderNameButtons(){
-
-  const box =
-    document.getElementById("nameButtons");
-
-  if(!box) return;
-
-  box.innerHTML = "";
-
-  const visibleList =
-    window.nameList.filter(
-      name =>
-        !window.hiddenNames.includes(name) ||
-        window.selectedNames.includes(name)
-    );
-
-  visibleList.forEach(name => {
-
-    const wrap =
-      document.createElement("div");
-
-    wrap.style.display = "inline-flex";
-    wrap.style.margin = "4px";
-
-    // =========================
-    // 이름 버튼
-    // =========================
-    const btn =
-      document.createElement("button");
-
-    btn.innerText = name;
-
-    btn.classList.toggle(
-      "active",
-      window.selectedNames.includes(name)
-    );
-
-    btn.onclick = ()=>{
-
-      if(window.selectedNames.includes(name)){
-
-        window.selectedNames =
-          window.selectedNames.filter(
-            n => n !== name
-          );
-
-      }else{
-
-        window.selectedNames.push(name);
-      }
-
-      highlightSelected();
-
-      updateNameInput();
-
-      checkForm();
-    };
-
-    // =========================
-    // 삭제 버튼
-    // =========================
-    const del =
-      document.createElement("button");
-
-    del.innerText = "✖";
-
-    del.style.background = "#ff4d4f";
-    del.style.color = "white";
-    del.style.marginLeft = "3px";
-
-    del.onclick = ()=>{
-
-      if(
-        !confirm(name + " 이름을 숨길까요?")
-      ){
-        return;
-      }
-
-      if(
-        !window.hiddenNames.includes(name)
-      ){
-        window.hiddenNames.push(name);
-      }
-
-      window.selectedNames =
-        window.selectedNames.filter(
-          n => n !== name
-        );
-
-sessionStorage.setItem(
-  "hiddenNames_" + DEFAULT_TEAM,
-  JSON.stringify(window.hiddenNames)
-);
-
-      renderNameButtons();
-
-      highlightSelected();
-
-      updateNameInput();
-
-      checkForm();
-    };
-
-    wrap.appendChild(btn);
-
-    wrap.appendChild(del);
-
-    box.appendChild(wrap);
+  const NAME_STORAGE_KEY = "nameList_" + DEFAULT_TEAM;
+  // =========================
+  // 상태 별칭
+  // =========================
+  Object.defineProperties(window, {
+    nameList: {
+      get: () => window.appState.nameList,
+      set: (v) => (window.appState.nameList = v),
+    },
+    selectedNames: {
+      get: () => window.appState.selectedNames,
+      set: (v) => (window.appState.selectedNames = v),
+    },
+    hiddenNames: {
+      get: () => window.appState.hiddenNames,
+      set: (v) => (window.appState.hiddenNames = v),
+    },
   });
-}
 
-// =========================
-// 선택 강조
-// =========================
-function highlightSelected(){
+  // =========================
+  // 초기 데이터 로드
+  // =========================
+  window.nameList = JSON.parse(localStorage.getItem(NAME_STORAGE_KEY) || "[]");
 
-  document
-    .querySelectorAll(
-      "#nameButtons button"
-    )
-    .forEach(btn => {
+  // =========================
+  // 이름 버튼 렌더링
+  // =========================
+  function renderNameButtons() {
+    const box = document.getElementById("nameButtons");
 
-      if(btn.innerText === "✖") return;
+    if (!box) return;
+
+    box.innerHTML = "";
+
+    const visibleList = window.nameList.filter(
+      (name) =>
+        !window.hiddenNames.includes(name) ||
+        window.selectedNames.includes(name),
+    );
+
+    visibleList.forEach((name) => {
+      const wrap = document.createElement("div");
+
+      wrap.style.display = "inline-flex";
+      wrap.style.margin = "4px";
+
+      // =========================
+      // 이름 버튼
+      // =========================
+      const btn = document.createElement("button");
+
+      btn.innerText = name;
+
+      btn.classList.toggle("active", window.selectedNames.includes(name));
+
+      btn.onclick = () => {
+        if (window.selectedNames.includes(name)) {
+          window.selectedNames = window.selectedNames.filter((n) => n !== name);
+        } else {
+          window.selectedNames.push(name);
+        }
+
+        highlightSelected();
+
+        updateNameInput();
+
+        checkForm();
+      };
+
+      // =========================
+      // 삭제 버튼
+      // =========================
+      const del = document.createElement("button");
+
+      del.innerText = "✖";
+
+      del.style.background = "#ff4d4f";
+      del.style.color = "white";
+      del.style.marginLeft = "3px";
+
+      del.onclick = () => {
+        if (!confirm(name + " 이름을 숨길까요?")) {
+          return;
+        }
+
+        if (!window.hiddenNames.includes(name)) {
+          window.hiddenNames.push(name);
+        }
+
+        window.selectedNames = window.selectedNames.filter((n) => n !== name);
+
+        google.script.run.saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+
+        renderNameButtons();
+
+        highlightSelected();
+
+        updateNameInput();
+
+        checkForm();
+      };
+
+      wrap.appendChild(btn);
+
+      wrap.appendChild(del);
+
+      box.appendChild(wrap);
+    });
+  }
+
+  // =========================
+  // 선택 강조
+  // =========================
+  function highlightSelected() {
+    document.querySelectorAll("#nameButtons button").forEach((btn) => {
+      if (btn.innerText === "✖") return;
 
       btn.classList.toggle(
         "active",
-        window.selectedNames.includes(
-          btn.innerText.trim()
-        )
+        window.selectedNames.includes(btn.innerText.trim()),
       );
     });
-}
-
-// =========================
-// input 반영
-// =========================
-function updateNameInput(){
-
-  const el =
-    document.getElementById("name");
-
-  if(el){
-
-    el.value =
-      window.selectedNames.join(", ");
   }
 
-  const el2 =
-    document.getElementById(
-      "selectedNames"
-    );
+  // =========================
+  // input 반영
+  // =========================
+  function updateNameInput() {
+    const el = document.getElementById("name");
 
-  if(el2){
-
-    el2.value =
-      window.selectedNames.join(", ");
-  }
-}
-
-// =========================
-// 이름 추가
-// =========================
-function addName(){
-
-  const input =
-    document.getElementById("newName");
-
-  if(!input) return;
-
-  const name =
-    input.value.trim();
-
-  if(!name) return;
-
-  // 이미 존재
-  if(window.nameList.includes(name)){
-
-    // 숨김 복구
-    if(
-      window.hiddenNames.includes(name)
-    ){
-
-      window.hiddenNames =
-        window.hiddenNames.filter(
-          n => n !== name
-        );
-
-sessionStorage.setItem(
-  "hiddenNames_" + DEFAULT_TEAM,
-  JSON.stringify(window.hiddenNames)
-);
-      renderNameButtons();
-
-      alert("숨김 해제됨");
-
-    }else{
-
-      alert("이미 있음");
+    if (el) {
+      el.value = window.selectedNames.join(", ");
     }
 
-    input.value = "";
+    const el2 = document.getElementById("selectedNames");
 
-    return;
+    if (el2) {
+      el2.value = window.selectedNames.join(", ");
+    }
   }
 
-  // 신규 추가
-  const newList = [
-    ...window.nameList,
-    name
-  ];
+  // =========================
+  // 이름 추가
+  // =========================
+  function addName() {
+    const input = document.getElementById("newName");
 
-  google.script.run
+    if (!input) return;
 
-    .withSuccessHandler((res)=>{
+    const name = input.value.trim();
 
-      window.nameList = res || newList;
+    if (!name) return;
 
-localStorage.setItem(
-  NAME_STORAGE_KEY,
-  JSON.stringify(window.nameList)
-);
-      renderNameButtons();
+    // 이미 존재
+    if (window.nameList.includes(name)) {
+      // 숨김 복구
+      if (window.hiddenNames.includes(name)) {
+        window.hiddenNames = window.hiddenNames.filter((n) => n !== name);
+
+        google.script.run.saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+        renderNameButtons();
+
+        alert("숨김 해제됨");
+      } else {
+        alert("이미 있음");
+      }
 
       input.value = "";
-    })
 
-.saveNamesToServer(
-  DEFAULT_TEAM,
-  newList
-);
-}
+      return;
+    }
 
-// =========================
-// 전체 삭제
-// =========================
-function deleteAllNames(){
+    // 신규 추가
+    const newList = [...window.nameList, name];
 
-  if(
-    !confirm(
-      "등록된 이름 전체 삭제할까요?"
-    )
-  ){
-    return;
+    google.script.run
+
+      .withSuccessHandler((res) => {
+        window.nameList = res || newList;
+
+        localStorage.setItem(NAME_STORAGE_KEY, JSON.stringify(window.nameList));
+        renderNameButtons();
+
+        input.value = "";
+      })
+
+      .saveNamesToServer(DEFAULT_TEAM, newList);
   }
 
-  window.nameList = [];
+  // =========================
+  // 전체 삭제
+  // =========================
+  function deleteAllNames() {
+    if (!confirm("등록된 이름 전체 삭제할까요?")) {
+      return;
+    }
 
-  window.selectedNames = [];
-localStorage.setItem(
-  NAME_STORAGE_KEY,
-  JSON.stringify([])
-);
+    window.nameList = [];
 
-  google.script.run
+    window.selectedNames = [];
+    localStorage.setItem(NAME_STORAGE_KEY, JSON.stringify([]));
 
-    .withSuccessHandler(()=>{
+    google.script.run
 
-      renderNameButtons();
+      .withSuccessHandler(() => {
+        renderNameButtons();
 
-      highlightSelected();
+        highlightSelected();
 
-      updateNameInput();
+        updateNameInput();
 
-      checkForm();
+        checkForm();
 
-      alert("전체 삭제 완료");
-    })
-.saveNamesToServer(
-  DEFAULT_TEAM,
-  []
-);
-}
+        alert("전체 삭제 완료");
+      })
+      .saveNamesToServer(DEFAULT_TEAM, []);
+  }
 
-// =========================
-// 초기 실행
-// =========================
-document.addEventListener(
-  "DOMContentLoaded",
-  ()=>{
-
+  // =========================
+  // 초기 실행
+  // =========================
+  document.addEventListener("DOMContentLoaded", () => {
     renderNameButtons();
 
     highlightSelected();
 
     updateNameInput();
-  }
-);
+  });
 </script>

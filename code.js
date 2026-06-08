@@ -386,3 +386,43 @@ function getCurrentTeam() {
     .getScriptProperties()
     .getProperty("CURRENT_TEAM") || "";
 }
+
+function saveHiddenNames(team, names) {
+
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(
+      "HIDDEN_NAMES_" + team,
+      JSON.stringify(names)
+    );
+}
+
+function getHiddenNames(team) {
+
+  return JSON.parse(
+    PropertiesService
+      .getScriptProperties()
+      .getProperty(
+        "HIDDEN_NAMES_" + team
+      ) || "[]"
+  );
+}
+
+function setLinkTeam(defaultTeam, selectedTeam) {
+
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(
+      "LINK_TEAM_" + defaultTeam,
+      selectedTeam
+    );
+}
+
+function getLinkTeam(defaultTeam) {
+
+  return PropertiesService
+    .getScriptProperties()
+    .getProperty(
+      "LINK_TEAM_" + defaultTeam
+    ) || defaultTeam;
+}
