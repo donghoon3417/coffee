@@ -65,7 +65,7 @@
 
             window.hiddenNames = hidden || [];
 
-            window.nameList = [...new Set(allNames)];
+            window.nameList = [...new Set(personalNames)];
 
             renderNameButtons();
             highlightSelected();
@@ -179,22 +179,28 @@
 
           console.log("클릭 후 hiddenNames:", [...window.hiddenNames]);
 
-          window.nameList = [...new Set([...window.nameList, ...members])];
-
-          const newHiddenNames = [...window.hiddenNames];
-
           google.script.run
-            .withSuccessHandler(() => {
-              window.selectedNames = [];
+            .withSuccessHandler((savedNames) => {
+              const personalNames = savedNames || [];
 
-              renderNameButtons();
-              highlightSelected();
-              updateNameInput();
-              checkForm();
+              window.nameList = [...new Set([...members, ...personalNames])];
+
+              const newHiddenNames = [...window.hiddenNames];
+
+              google.script.run
+                .withSuccessHandler(() => {
+                  window.selectedNames = [];
+
+                  renderNameButtons();
+                  highlightSelected();
+                  updateNameInput();
+                  checkForm();
+                })
+                .saveHiddenNames(DEFAULT_TEAM, newHiddenNames);
             })
-            .saveHiddenNames(DEFAULT_TEAM, newHiddenNames);
+            .getNamesFromServer(DEFAULT_TEAM);
         } else {
-          window.nameList = [...new Set([...window.nameList, ...members])];
+          window.nameList = [...new Set(members)];
 
           window.selectedNames = [];
 
@@ -339,9 +345,5 @@
     loadTeams();
 
     loadNames();
-
-    setInterval(() => {
-      loadTeams();
-    }, 3000);
   });
 </script>
