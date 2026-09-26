@@ -8,49 +8,11 @@
   // =========================
   function loadTeams() {
     google.script.run
-
       .withSuccessHandler((res) => {
-        const before = JSON.stringify(window.teams);
+        window.teams = res || {};
 
-        const after = JSON.stringify(res || {});
-
-        if (before !== after) {
-          window.teams = res || {};
-
-          renderTeamButtons();
-
-          google.script.run
-
-            .withSuccessHandler((team) => {
-              google.script.run
-
-                .withSuccessHandler((savedTeams) => {
-                  let teams = [];
-
-                  try {
-                    teams = JSON.parse(savedTeams || "[]");
-                  } catch (e) {
-                    teams = [];
-                  }
-
-                  const btns = document.querySelectorAll("#teamButtons button");
-
-                  teams.forEach((team) => {
-                    btns.forEach((btn) => {
-                      if (btn.innerText === team) {
-                        btn.onclick(true);
-                      }
-                    });
-                  });
-                })
-
-                .getLinkTeam(DEFAULT_TEAM);
-            })
-
-            .getCurrentTeam();
-        }
+        renderTeamButtons();
       })
-
       .getTeamsFromServer();
   }
 
@@ -75,17 +37,6 @@
             console.log("서버에서 가져온 hiddenNames:", hidden);
 
             window.hiddenNames = hidden || [];
-
-            // 개인 기본 명단
-            // + 현재까지 선택한 팀들의 팀원
-            let allNames = [...personalNames];
-
-            Object.keys(window.teams || {}).forEach((team) => {
-              if (window.selectedTeams.includes(team)) {
-                const members = window.teams[team] || [];
-                allNames.push(...members);
-              }
-            });
 
             window.nameList = [...new Set(allNames)];
 
