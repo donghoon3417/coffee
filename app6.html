@@ -2,7 +2,7 @@
   window.teams = {};
   window.currentTeam = null;
   window.selectedTeams = [];
-
+  window.hiddenNamesVersion = 0;
   // =========================
   // 서버에서 팀 불러오기
   // =========================
@@ -58,13 +58,21 @@
   // 서버에서 이름 불러오기
   // =========================
   function loadNames() {
+    const requestVersion = window.hiddenNamesVersion;
+
     google.script.run
       .withSuccessHandler((res) => {
         const personalNames = res || [];
 
         google.script.run
           .withSuccessHandler((hidden) => {
-            console.log("서버에서 다시 가져온 hiddenNames:", hidden);
+            // 팀 버튼 클릭 등으로 hiddenNames가 변경된 이후
+            // 시작된 이전 요청의 응답이면 무시
+            if (requestVersion !== window.hiddenNamesVersion) {
+              return;
+            }
+
+            console.log("서버에서 가져온 hiddenNames:", hidden);
 
             window.hiddenNames = hidden || [];
 
@@ -147,9 +155,14 @@
 
       const btn = document.createElement("button");
 
+      btn.type = "button";
       btn.innerText = t;
 
-      btn.onclick = (isRestore = false) => {
+      btn.onclick = (event) => {
+        // 사람이 클릭하면 false
+        // btn.onclick(true)로 호출하면 true
+        const isRestore = event === true;
+
         window.currentTeam = t;
 
         if (!window.selectedTeams.includes(t)) {
@@ -173,17 +186,25 @@
         } else {
           members = [];
         }
-        // 팀 버튼을 직접 클릭했을 때만
-        // 해당 팀원들의 숨김 해제
+
+        console.log("팀 버튼 클릭:", t);
+        console.log("isRestore:", isRestore);
+        console.log("팀원:", members);
+        console.log("클릭 전 hiddenNames:", [...(window.hiddenNames || [])]);
+
         if (!isRestore) {
+          window.hiddenNamesVersion++;
+
           window.hiddenNames = (window.hiddenNames || []).filter(
             (name) => !members.includes(name),
           );
 
-          // 기존 이름 유지 + 팀원 누적 추가
+          console.log("클릭 후 hiddenNames:", [...window.hiddenNames]);
+
           window.nameList = [...new Set([...window.nameList, ...members])];
 
-          // 숨김 저장이 완료된 후 화면 갱신
+          const newHiddenNames = [...window.hiddenNames];
+
           google.script.run
             .withSuccessHandler(() => {
               window.selectedNames = [];
@@ -193,9 +214,8 @@
               updateNameInput();
               checkForm();
             })
-            .saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+            .saveHiddenNames(DEFAULT_TEAM, newHiddenNames);
         } else {
-          // 자동 복원(isRestore=true)은 서버 저장 없이 화면만 갱신
           window.nameList = [...new Set([...window.nameList, ...members])];
 
           window.selectedNames = [];
@@ -344,8 +364,6 @@
 
     setInterval(() => {
       loadTeams();
-
-      loadNames();
     }, 3000);
   });
 </script>

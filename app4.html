@@ -209,21 +209,20 @@
     if (!confirm("등록된 이름 전체 삭제할까요?")) {
       return;
     }
-
+    window.hiddenNamesVersion++;
     window.nameList = [];
-
+    window.hiddenNames = [];
     window.selectedNames = [];
+
     localStorage.setItem(NAME_STORAGE_KEY, JSON.stringify([]));
 
-    google.script.run
+    google.script.run.saveHiddenNames(DEFAULT_TEAM, []);
 
+    google.script.run
       .withSuccessHandler(() => {
         renderNameButtons();
-
         highlightSelected();
-
         updateNameInput();
-
         checkForm();
 
         alert("전체 삭제 완료");
