@@ -1,227 +1,205 @@
 <script>
+  let selectedMenu = "";
+  let selectedTemp = "";
+  let selectedSize = "";
+  let isDecaf = false;
+  let isCaffeine = false;
+  let isNormalDrink = false;
 
-let selectedMenu = "";
-let selectedTemp = "";
-let selectedSize = "";
-let isDecaf = false;
-let isCaffeine = false;
-let isNormalDrink = false;
+  const coffeeMenus = [
+    "아메리카노",
+    "카페라떼",
+    "바닐라라떼",
+    "카라멜마끼아또",
+    "돌체라떼",
+    "콜드브루",
+  ];
 
-const coffeeMenus = [
-  "아메리카노",
-  "카페라떼",
-  "바닐라라떼",
-  "카라멜마끼아또",
-  "돌체라떼",
-  "콜드브루"
-];
+  const normalMenus = [
+    "딸기라떼",
+    "초코라떼",
+    "자몽티",
+    "레몬에이드",
+    "복숭아아이스티",
+    "녹차라떼",
+  ];
 
-const normalMenus = [
-  "딸기라떼",
-  "초코라떼",
-  "자몽티",
-  "레몬에이드",
-  "복숭아아이스티",
-  "녹차라떼"
-];
+  // =========================
+  // 메뉴 렌더링
+  // =========================
+  function renderMenus(menuArray) {
+    const menuSection = document.getElementById("menuSection");
 
+    menuSection.innerHTML = "";
 
-// =========================
-// 메뉴 렌더링
-// =========================
-function renderMenus(menuArray){
-
-  const menuSection =
-    document.getElementById("menuSection");
-
-  menuSection.innerHTML = "";
-
-  menuArray.forEach(menu => {
-
-    menuSection.innerHTML += `
+    menuArray.forEach((menu) => {
+      menuSection.innerHTML += `
       <button onclick="selectMenu(this,'${menu}')">
         ${menu}
       </button>
     `;
+    });
 
-  });
+    selectedMenu = "";
+    checkForm();
+  }
 
-  selectedMenu = "";
-  checkForm();
-}
+  function initDefault() {
+    selectedMenu = "";
+    selectedTemp = "ICE";
+    selectedSize = "M";
 
-function initDefault(){
+    isDecaf = false;
+    isCaffeine = true;
+    isNormalDrink = false;
 
-  selectedMenu = "";
-  selectedTemp = "ICE";
-  selectedSize = "M";
+    renderMenus(coffeeMenus);
 
-  isDecaf = false;
-  isCaffeine = true;
-  isNormalDrink = false;
-
-  renderMenus(coffeeMenus);
-
-  // 🔥 HOT / ICE 기본 선택
-  document.querySelectorAll("#tempSection button")
-    .forEach(b => {
+    // 🔥 HOT / ICE 기본 선택
+    document.querySelectorAll("#tempSection button").forEach((b) => {
       b.classList.toggle("active", b.innerText === "ICE");
     });
 
-  // 🔥 사이즈 기본 선택
-  document.querySelectorAll("#sizeSection button")
-    .forEach(b => {
+    // 🔥 사이즈 기본 선택
+    document.querySelectorAll("#sizeSection button").forEach((b) => {
       b.classList.toggle("active", b.innerText === "M");
     });
 
-  checkForm();
-}
-// =========================
-// 메뉴 선택
-// =========================
-function selectMenu(btn, menu){
+    checkForm();
+  }
+  // =========================
+  // 메뉴 선택
+  // =========================
+  function selectMenu(btn, menu) {
+    document
+      .querySelectorAll("#menuSection button")
+      .forEach((b) => b.classList.remove("active"));
 
-  document.querySelectorAll("#menuSection button")
-    .forEach(b => b.classList.remove("active"));
+    selectedMenu = menu;
 
-  selectedMenu = menu;
+    btn.classList.add("active");
 
-  btn.classList.add("active");
+    checkForm();
+  }
 
-  checkForm();
-}
+  // =========================
+  // 음료 타입 변경 (핵심 통합)
+  // =========================
+  function changeDrinkType(btn, menus) {
+    document
+      .querySelectorAll(".caffeine-btn")
+      .forEach((b) => b.classList.remove("active"));
 
+    btn.classList.add("active");
 
-// =========================
-// 음료 타입 변경 (핵심 통합)
-// =========================
-function changeDrinkType(btn, menus){
+    resetMenuState();
 
-  document
-    .querySelectorAll(".caffeine-btn")
-    .forEach(b => b.classList.remove("active"));
+    renderMenus(menus);
+  }
 
-  btn.classList.add("active");
+  // =========================
+  function toggleCaffeine(btn) {
+    isCaffeine = true;
+    isDecaf = false;
+    isNormalDrink = false;
 
-  resetMenuState();
+    changeDrinkType(btn, coffeeMenus);
+  }
 
-  renderMenus(menus);
-}
+  function toggleDecaf(btn) {
+    isCaffeine = false;
+    isDecaf = true;
+    isNormalDrink = false;
 
+    changeDrinkType(btn, coffeeMenus);
+  }
 
-// =========================
-function toggleCaffeine(btn){
-  isCaffeine = true;
-  isDecaf = false;
-  isNormalDrink = false;
+  function toggleNormalDrink(btn) {
+    isCaffeine = false;
+    isDecaf = false;
+    isNormalDrink = true;
 
-  changeDrinkType(btn, coffeeMenus);
-}
+    changeDrinkType(btn, normalMenus);
+  }
 
-function toggleDecaf(btn){
-  isCaffeine = false;
-  isDecaf = true;
-  isNormalDrink = false;
+  // =========================
+  // 메뉴 상태 초기화
+  // =========================
+  function resetMenuState() {
+    selectedMenu = "";
 
-  changeDrinkType(btn, coffeeMenus);
-}
+    document.getElementById("customMenu").value = "";
 
-function toggleNormalDrink(btn){
-  isCaffeine = false;
-  isDecaf = false;
-  isNormalDrink = true;
+    document
+      .querySelectorAll("#menuSection button")
+      .forEach((b) => b.classList.remove("active"));
+  }
 
-  changeDrinkType(btn, normalMenus);
-}
+  // =========================
+  // 폼 검증
+  // =========================
+  function checkForm() {
+    const btn = document.getElementById("saveBtn");
 
+    const custom = document.getElementById("customMenu").value.trim();
 
-// =========================
-// 메뉴 상태 초기화
-// =========================
-function resetMenuState(){
+    const hasName = window.selectedNames && window.selectedNames.length > 0;
 
-  selectedMenu = "";
+    const hasMenu = selectedMenu && selectedMenu.trim() !== "";
 
-  document.getElementById("customMenu").value = "";
+    const ok = true;
 
-  document.querySelectorAll("#menuSection button")
-    .forEach(b => b.classList.remove("active"));
-}
+    btn.disabled = false;
+    btn.style.background = "#4CAF50";
+  }
 
+  // =========================
+  // 온도 / 사이즈
+  // =========================
+  function selectTemp(btn, temp) {
+    document
+      .querySelectorAll("#tempSection button")
+      .forEach((b) => b.classList.remove("active"));
 
-// =========================
-// 폼 검증
-// =========================
-function checkForm(){
+    selectedTemp = temp;
 
-  const btn = document.getElementById("saveBtn");
+    btn.classList.add("active");
 
-  const custom =
-    document.getElementById("customMenu").value.trim();
+    checkForm();
+  }
 
-  const hasName =
-    window.selectedNames &&
-    window.selectedNames.length > 0;
+  function selectSize(btn, size) {
+    document
+      .querySelectorAll("#sizeSection button")
+      .forEach((b) => b.classList.remove("active"));
 
-  const hasMenu =
-    selectedMenu && selectedMenu.trim() !== "";
+    selectedSize = size;
 
-  const ok = hasName && (hasMenu || custom);
+    btn.classList.add("active");
 
-  btn.disabled = !ok;
-  btn.style.background = ok ? "#4CAF50" : "#aaa";
-}
+    checkForm();
+  }
 
+  // =========================
+  // custom 입력 처리
+  // =========================
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      .getElementById("customMenu")
+      .addEventListener("input", function () {
+        if (this.value.trim()) {
+          selectedMenu = "";
 
-// =========================
-// 온도 / 사이즈
-// =========================
-function selectTemp(btn, temp){
+          document
+            .querySelectorAll("#menuSection button")
+            .forEach((b) => b.classList.remove("active"));
+        }
 
-  document.querySelectorAll("#tempSection button")
-    .forEach(b => b.classList.remove("active"));
+        checkForm();
+      });
 
-  selectedTemp = temp;
-
-  btn.classList.add("active");
-
-  checkForm();
-}
-
-function selectSize(btn, size){
-
-  document.querySelectorAll("#sizeSection button")
-    .forEach(b => b.classList.remove("active"));
-
-  selectedSize = size;
-
-  btn.classList.add("active");
-
-  checkForm();
-}
-
-
-// =========================
-// custom 입력 처리
-// =========================
-document.addEventListener("DOMContentLoaded", ()=>{
-
-  document.getElementById("customMenu")
-    .addEventListener("input", function(){
-
-      if(this.value.trim()){
-        selectedMenu = "";
-
-        document.querySelectorAll("#menuSection button")
-          .forEach(b => b.classList.remove("active"));
-      }
-
-      checkForm();
-    });
-
-  renderMenus(coffeeMenus);
+    renderMenus(coffeeMenus);
 
     initDefault(); // 🔥 이거 추가
-});
-
+  });
 </script>
