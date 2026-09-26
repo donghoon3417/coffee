@@ -29,7 +29,7 @@
   // =========================
   // 초기 데이터 로드
   // =========================
-  window.nameList = JSON.parse(localStorage.getItem(NAME_STORAGE_KEY) || "[]");
+  window.nameList = [];
 
   // =========================
   // 이름 버튼 렌더링
@@ -104,7 +104,10 @@
 
         window.selectedNames = window.selectedNames.filter((n) => n !== name);
 
-        google.script.run.saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+        google.script.run.saveHiddenNames(
+          window.currentTeam || DEFAULT_TEAM,
+          window.hiddenNames,
+        );
 
         renderNameButtons();
 
@@ -199,7 +202,7 @@
         input.value = "";
       })
 
-      .saveNamesToServer(DEFAULT_TEAM, newList);
+      .saveNamesToServer(window.currentTeam || DEFAULT_TEAM, newList);
   }
 
   // =========================
@@ -242,10 +245,7 @@
   // 초기 실행
   // =========================
   document.addEventListener("DOMContentLoaded", () => {
-    renderNameButtons();
-
     highlightSelected();
-
     updateNameInput();
   });
 </script>

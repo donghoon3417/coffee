@@ -1,8 +1,9 @@
 <script>
   window.teams = {};
-  window.currentTeam = null;
-  window.selectedTeams = [];
+  window.currentTeam = DEFAULT_TEAM;
+  window.selectedTeams = [DEFAULT_TEAM];
   window.hiddenNamesVersion = 0;
+
   // =========================
   // 서버에서 팀 불러오기
   // =========================
@@ -11,34 +12,14 @@
       .withSuccessHandler((res) => {
         window.teams = res || {};
 
+        // URL 파라미터로 지정된 팀을 현재 팀으로 고정
+        window.currentTeam = DEFAULT_TEAM;
+        window.selectedTeams = [DEFAULT_TEAM];
+
         renderTeamButtons();
 
-        // 마지막으로 선택한 팀 불러오기
-        google.script.run
-          .withSuccessHandler((savedTeams) => {
-            let teams = [];
-
-            try {
-              teams = JSON.parse(savedTeams || "[]");
-            } catch (e) {
-              teams = [];
-            }
-
-            // 선택된 팀 기억
-            window.selectedTeams = teams;
-
-            // 저장된 팀이 있을 때만 팀원 복원
-            teams.forEach((team) => {
-              const btns = document.querySelectorAll("#teamButtons button");
-
-              btns.forEach((btn) => {
-                if (btn.innerText === team) {
-                  btn.onclick(true);
-                }
-              });
-            });
-          })
-          .getLinkTeam(DEFAULT_TEAM);
+        // 팀이 확정된 후 해당 팀의 명단 불러오기
+        loadNames();
       })
       .getTeamsFromServer();
   }
@@ -48,34 +29,40 @@
   // =========================
   function loadNames() {
     const requestVersion = window.hiddenNamesVersion;
+    const team = window.currentTeam || DEFAULT_TEAM;
 
     google.script.run
-      .withSuccessHandler((res) => {
-        const personalNames = res || [];
-
+      .withSuccessHandler((personalNames) => {
         google.script.run
           .withSuccessHandler((hidden) => {
-            // 팀 버튼 클릭 등으로 hiddenNames가 변경된 이후
-            // 시작된 이전 요청의 응답이면 무시
+            // 팀 변경 이후 시작된 이전 요청이면 무시
             if (requestVersion !== window.hiddenNamesVersion) {
               return;
             }
 
-            console.log("서버에서 가져온 hiddenNames:", hidden);
-
             window.hiddenNames = hidden || [];
 
-            window.nameList = [...new Set(personalNames)];
+            window.nameList = [...new Set(personalNames || [])];
+
+            // 현재 팀의 명단을 로컬에도 보관
+            const storageKey = "nameList_" + team;
+
+            localStorage.setItem(storageKey, JSON.stringify(window.nameList));
+
+            console.log("현재 팀:", team);
+            console.log("서버 명단:", window.nameList);
+            console.log("hiddenNames:", window.hiddenNames);
 
             renderNameButtons();
             highlightSelected();
             updateNameInput();
             checkForm();
           })
-          .getHiddenNames(DEFAULT_TEAM);
+          .getHiddenNames(team);
       })
-      .getNamesFromServer(DEFAULT_TEAM);
+      .getNamesFromServer(team);
   }
+
   // =========================
   // 팀 저장
   // =========================
@@ -97,10 +84,10 @@
     // 팀 객체에 추가
     window.teams[name] = [...window.selectedNames];
 
+    // 팀별 이름 목록 저장
     google.script.run.saveNamesToServer(name, window.selectedNames);
 
     google.script.run
-
       .withSuccessHandler((res) => {
         window.teams = res || {};
 
@@ -108,7 +95,6 @@
 
         alert("팀 저장 완료");
       })
-
       .saveTeamsToServer(window.teams);
   }
 
@@ -124,11 +110,21 @@
 
     box.innerHTML = "";
 
+    // 현재 팀 표시
+    const currentTeamLabel = document.createElement("div");
+
+    currentTeamLabel.className = "current-team-label";
+    currentTeamLabel.innerText = `현재 팀: ${window.currentTeam || DEFAULT_TEAM}`;
+
+    currentTeamLabel.style.fontWeight = "bold";
+    currentTeamLabel.style.marginBottom = "8px";
+
+    box.appendChild(currentTeamLabel);
+
     Object.keys(window.teams).forEach((t) => {
       const wrap = document.createElement("div");
 
       wrap.style.display = "inline-flex";
-
       wrap.style.margin = "4px";
 
       const btn = document.createElement("button");
@@ -136,26 +132,28 @@
       btn.type = "button";
       btn.innerText = t;
 
-      btn.onclick = (event) => {
-        // 사람이 클릭하면 false
-        // btn.onclick(true)로 호출하면 true
-        const isRestore = event === true;
-
+      btn.onclick = () => {
+        // 현재 팀 변경
         window.currentTeam = t;
+        window.selectedTeams = [t];
 
-        if (!window.selectedTeams.includes(t)) {
-          window.selectedTeams.push(t);
+        console.log("팀 버튼 클릭:", t);
+        console.log("현재 팀:", window.currentTeam);
+
+        // 현재 팀 표시 갱신
+        const currentTeamLabel = box.querySelector(".current-team-label");
+
+        if (currentTeamLabel) {
+          currentTeamLabel.innerText = `현재 팀: ${window.currentTeam}`;
         }
 
-        google.script.run.setLinkTeam(
-          DEFAULT_TEAM,
-          JSON.stringify(window.selectedTeams),
-        );
+        // 팀 변경이므로 이전 서버 요청 무효화
+        window.hiddenNamesVersion++;
 
         let members = window.teams[t];
 
         if (Array.isArray(members)) {
-          members = members;
+          members = [...members];
         } else if (typeof members === "string") {
           members = members
             .split(",")
@@ -165,60 +163,58 @@
           members = [];
         }
 
-        console.log("팀 버튼 클릭:", t);
-        console.log("isRestore:", isRestore);
         console.log("팀원:", members);
         console.log("클릭 전 hiddenNames:", [...(window.hiddenNames || [])]);
 
-        if (!isRestore) {
-          window.hiddenNamesVersion++;
+        // 현재 팀에 포함된 이름은 숨김 목록에서 제외
+        window.hiddenNames = (window.hiddenNames || []).filter(
+          (name) => !members.includes(name),
+        );
 
-          window.hiddenNames = (window.hiddenNames || []).filter(
-            (name) => !members.includes(name),
-          );
+        console.log("클릭 후 hiddenNames:", [...window.hiddenNames]);
 
-          console.log("클릭 후 hiddenNames:", [...window.hiddenNames]);
+        // 현재 팀의 개인 명단 가져오기
+        google.script.run
+          .withSuccessHandler((savedNames) => {
+            const personalNames = savedNames || [];
 
-          google.script.run
-            .withSuccessHandler((savedNames) => {
-              const personalNames = savedNames || [];
+            // 팀원 + 개인적으로 추가된 이름
+            window.nameList = [...new Set([...members, ...personalNames])];
 
-              window.nameList = [...new Set([...members, ...personalNames])];
+            const newHiddenNames = [...window.hiddenNames];
 
-              const newHiddenNames = [...window.hiddenNames];
+            // 현재 팀의 hiddenNames 저장
+            google.script.run
+              .withSuccessHandler(() => {
+                window.selectedNames = [];
 
-              google.script.run
-                .withSuccessHandler(() => {
-                  window.selectedNames = [];
+                // 현재 팀 명단을 로컬에도 저장
+                const storageKey = "nameList_" + t;
 
-                  renderNameButtons();
-                  highlightSelected();
-                  updateNameInput();
-                  checkForm();
-                })
-                .saveHiddenNames(DEFAULT_TEAM, newHiddenNames);
-            })
-            .getNamesFromServer(DEFAULT_TEAM);
-        } else {
-          window.nameList = [...new Set(members)];
+                localStorage.setItem(
+                  storageKey,
+                  JSON.stringify(window.nameList),
+                );
 
-          window.selectedNames = [];
-
-          renderNameButtons();
-          highlightSelected();
-          updateNameInput();
-          checkForm();
-        }
+                renderNameButtons();
+                highlightSelected();
+                updateNameInput();
+                checkForm();
+              })
+              .saveHiddenNames(t, newHiddenNames);
+          })
+          .getNamesFromServer(t);
       };
 
+      // =========================
+      // 팀 삭제 버튼
+      // =========================
       const del = document.createElement("button");
 
       del.innerText = "✖";
 
       del.style.background = "#ff4d4f";
-
       del.style.color = "white";
-
       del.style.marginLeft = "3px";
 
       if (!window.appState.isAdmin) {
@@ -231,13 +227,11 @@
         delete window.teams[t];
 
         google.script.run
-
           .withSuccessHandler((res) => {
             window.teams = res || {};
 
             renderTeamButtons();
           })
-
           .saveTeamsToServer(window.teams);
       };
 
@@ -303,10 +297,10 @@
     // 새 팀 저장
     window.teams[newTeam] = [...new Set(members)];
 
+    // 새 팀의 이름 목록 저장
     google.script.run.saveNamesToServer(newTeam, [...new Set(members)]);
 
     google.script.run
-
       .withSuccessHandler((res) => {
         window.teams = res || {};
 
@@ -314,7 +308,6 @@
 
         alert("팀 수정 완료");
       })
-
       .saveTeamsToServer(window.teams);
   }
 
@@ -325,6 +318,7 @@
     if (!window.appState.isAdmin) {
       return;
     }
+
     const el = document.getElementById("teamSection");
 
     if (!el) return;
@@ -340,10 +334,9 @@
   // 초기 실행
   // =========================
   document.addEventListener("DOMContentLoaded", () => {
-    renderTeamButtons();
-
+    // 팀을 먼저 확정하고
+    // loadTeams() 내부에서
+    // 해당 팀의 명단을 불러온다.
     loadTeams();
-
-    loadNames();
   });
 </script>
