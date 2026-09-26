@@ -12,6 +12,33 @@
         window.teams = res || {};
 
         renderTeamButtons();
+
+        // 마지막으로 선택한 팀 불러오기
+        google.script.run
+          .withSuccessHandler((savedTeams) => {
+            let teams = [];
+
+            try {
+              teams = JSON.parse(savedTeams || "[]");
+            } catch (e) {
+              teams = [];
+            }
+
+            // 선택된 팀 기억
+            window.selectedTeams = teams;
+
+            // 저장된 팀이 있을 때만 팀원 복원
+            teams.forEach((team) => {
+              const btns = document.querySelectorAll("#teamButtons button");
+
+              btns.forEach((btn) => {
+                if (btn.innerText === team) {
+                  btn.onclick(true);
+                }
+              });
+            });
+          })
+          .getLinkTeam(DEFAULT_TEAM);
       })
       .getTeamsFromServer();
   }

@@ -209,25 +209,33 @@
     if (!confirm("등록된 이름 전체 삭제할까요?")) {
       return;
     }
+
     window.hiddenNamesVersion++;
+
+    // 이름 목록 + 숨김 목록 + 선택 목록 모두 초기화
     window.nameList = [];
     window.hiddenNames = [];
     window.selectedNames = [];
 
+    // 로컬 저장
     localStorage.setItem(NAME_STORAGE_KEY, JSON.stringify([]));
 
-    google.script.run.saveHiddenNames(DEFAULT_TEAM, []);
-
+    // 서버의 숨김 이름도 삭제
     google.script.run
       .withSuccessHandler(() => {
-        renderNameButtons();
-        highlightSelected();
-        updateNameInput();
-        checkForm();
+        // 서버의 이름 목록도 삭제
+        google.script.run
+          .withSuccessHandler(() => {
+            renderNameButtons();
+            highlightSelected();
+            updateNameInput();
+            checkForm();
 
-        alert("전체 삭제 완료");
+            alert("전체 삭제 완료");
+          })
+          .saveNamesToServer(DEFAULT_TEAM, []);
       })
-      .saveNamesToServer(DEFAULT_TEAM, []);
+      .saveHiddenNames(DEFAULT_TEAM, []);
   }
 
   // =========================
