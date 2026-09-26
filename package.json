@@ -3,5 +3,8 @@
     "push": "clasp push",
     "watch": "clasp push -w",
     "pull": "clasp pull"
+  },
+  "devDependencies": {
+    "@types/google-apps-script": "^2.0.13"
   }
 }

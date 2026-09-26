@@ -19,19 +19,6 @@
 
           renderTeamButtons();
 
-          // 링크의 team=peace 자동 적용
-          if (DEFAULT_TEAM && window.teams[DEFAULT_TEAM]) {
-            const members = window.teams[DEFAULT_TEAM];
-
-            window.nameList = [...new Set(members)];
-
-            renderNameButtons();
-
-            highlightSelected?.();
-            updateNameInput?.();
-            checkForm?.();
-          }
-
           google.script.run
 
             .withSuccessHandler((team) => {
@@ -73,11 +60,26 @@
   function loadNames() {
     google.script.run
       .withSuccessHandler((res) => {
-        window.nameList = res || [];
+        const personalNames = res || [];
 
         google.script.run
           .withSuccessHandler((hidden) => {
+            console.log("서버에서 다시 가져온 hiddenNames:", hidden);
+
             window.hiddenNames = hidden || [];
+
+            // 개인 기본 명단
+            // + 현재까지 선택한 팀들의 팀원
+            let allNames = [...personalNames];
+
+            Object.keys(window.teams || {}).forEach((team) => {
+              if (window.selectedTeams.includes(team)) {
+                const members = window.teams[team] || [];
+                allNames.push(...members);
+              }
+            });
+
+            window.nameList = [...new Set(allNames)];
 
             renderNameButtons();
             highlightSelected();
@@ -178,18 +180,31 @@
             (name) => !members.includes(name),
           );
 
-          google.script.run.saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+          // 기존 이름 유지 + 팀원 누적 추가
+          window.nameList = [...new Set([...window.nameList, ...members])];
+
+          // 숨김 저장이 완료된 후 화면 갱신
+          google.script.run
+            .withSuccessHandler(() => {
+              window.selectedNames = [];
+
+              renderNameButtons();
+              highlightSelected();
+              updateNameInput();
+              checkForm();
+            })
+            .saveHiddenNames(DEFAULT_TEAM, window.hiddenNames);
+        } else {
+          // 자동 복원(isRestore=true)은 서버 저장 없이 화면만 갱신
+          window.nameList = [...new Set([...window.nameList, ...members])];
+
+          window.selectedNames = [];
+
+          renderNameButtons();
+          highlightSelected();
+          updateNameInput();
+          checkForm();
         }
-
-        // 기존 이름 유지 + 팀원 누적 추가
-        window.nameList = [...new Set([...window.nameList, ...members])];
-
-        // 팀원 선택 초기화
-        window.selectedNames = [];
-        renderNameButtons();
-        highlightSelected();
-        updateNameInput();
-        checkForm();
       };
 
       const del = document.createElement("button");

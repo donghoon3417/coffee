@@ -39,6 +39,10 @@
 
     if (!box) return;
 
+    console.log("=== renderNameButtons ===");
+    console.log("nameList:", window.nameList);
+    console.log("hiddenNames:", window.hiddenNames);
+
     box.innerHTML = "";
 
     const visibleList = window.nameList.filter(
@@ -46,6 +50,8 @@
         !window.hiddenNames.includes(name) ||
         window.selectedNames.includes(name),
     );
+
+    console.log("visibleList:", visibleList);
 
     visibleList.forEach((name) => {
       const wrap = document.createElement("div");

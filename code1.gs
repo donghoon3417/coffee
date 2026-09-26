@@ -1,0 +1,178 @@
+const SHEET_NAME = "커피주문";
+const MENU_FOLDER_ID = "1bptCsJreA_saTjituhJ2OqgtHuP5fh6T";
+function doGet(e) {
+  const t = HtmlService.createTemplateFromFile("index");
+
+  t.defaultTeam = e.parameter.team || "";
+
+  return t.evaluate();
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// 저장
+function saveOrder(data) {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+  const time = Utilities.formatDate(new Date(), "Asia/Seoul", "HH:mm:ss");
+
+  // 🔥 여기서 변경
+  data.names.forEach((name) => {
+    sheet.appendRow([
+      data.team,
+      time,
+      name,
+      data.menu,
+      data.temp,
+      data.size,
+      data.option,
+      data.note,
+    ]);
+  });
+}
+
+// 🔥 전체 데이터 + 집계 한번에
+function getAllData(team) {
+  Logger.log(team);
+
+  const result = {
+    orders: getOrders(team),
+    summary: getSummary(team),
+  };
+
+  Logger.log(JSON.stringify(result));
+
+  return result;
+}
+
+// 전체 조회
+function getOrders(team) {
+  const data = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName(SHEET_NAME)
+    .getDataRange()
+    .getDisplayValues();
+
+  return data
+    .filter(
+      (r, i) => i === 0 || !team || String(r[0]).trim() === String(team).trim(),
+    )
+    .map((r, i) => [...r, i]);
+}
+
+// 삭제
+function deleteRow(rowIndex) {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  sheet.deleteRow(rowIndex + 1);
+}
+
+function deleteMultiple(indexes) {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+  // 큰 번호부터 삭제
+  indexes
+    .sort((a, b) => b - a)
+    .forEach((i) => {
+      // 헤더 제외 +1
+      const rowNumber = i + 1;
+
+      if (rowNumber > 1) {
+        sheet.deleteRow(rowNumber);
+      }
+    });
+}
+
+// 주문 마감
+function setOrderClosed(team, state) {
+  const prop = PropertiesService.getScriptProperties();
+
+  prop.setProperty("ORDER_CLOSED_" + team, state ? "true" : "false");
+}
+
+function getOrderClosed(team) {
+  const prop = PropertiesService.getScriptProperties();
+
+  return prop.getProperty("ORDER_CLOSED_" + team) === "true";
+}
+
+// 카톡 텍스트
+function getOrderText(team) {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const data = sheet
+    .getDataRange()
+    .getValues()
+    .slice(1)
+    .filter((r) => !team || String(r[0]).trim() === String(team).trim());
+
+  const result = {};
+
+  data.forEach((r) => {
+    const key = `${r[3]} ${r[2]} ${r[4]}`;
+    const name = r[2];
+
+    if (!result[key]) result[key] = [];
+    result[key].push(name);
+  });
+
+  let text = "☕ 커피 주문\n────────────\n";
+
+  Object.keys(result)
+    .sort()
+    .forEach((k) => {
+      text += `\n📌 ${k} (${result[k].length}잔)\n`;
+      text += `${result[k].join(", ")}\n`;
+    });
+
+  text += "\n────────────";
+
+  return text;
+}
+
+// 전체 삭제
+function resetAllOrders() {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
+}
+
+// code.js
+function checkAdmin(password) {
+  const ADMIN_PW = "3417";
+  return password === ADMIN_PW;
+}
+
+// 집계
+function getSummary(team) {
+  const sheet =
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const data = sheet
+    .getDataRange()
+    .getValues()
+    .slice(1)
+    .filter((r) => !team || String(r[0]).trim() === String(team).trim());
+
+  const result = {};
+
+  data.forEach((r) => {
+    const key = `${r[3]} ${r[2]} ${r[4]}`;
+    const name = r[2];
+
+    if (!result[key]) {
+      result[key] = { count: 0, names: [] };
+    }
+
+    result[key].count++;
+    result[key].names.push(name);
+  });
+
+  return result;
+}
